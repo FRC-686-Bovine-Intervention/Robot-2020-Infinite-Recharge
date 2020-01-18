@@ -59,30 +59,6 @@ public class Intake extends Subsystem implements Loop
         stop();
     }
 
-    public void run(){
-        DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
-
-        if (driverControls.getBoolean(DriverControlsEnum.INTAKE))
-        {
-            set(+Constants.kIntakeVoltage);
-            timerStarted = false;
-        }
-        else if (driverControls.getBoolean(DriverControlsEnum.OUTTAKE))
-        {
-            set(-Constants.kIntakeVoltage);
-        }
-        else 
-        {
-            if(!timerStarted){
-                startTime = Timer.getFPGATimestamp();
-                timerStarted = true;
-            }
-            if((Timer.getFPGATimestamp()-startTime) >= extendedTime){
-                stop();
-            }
-        }
-    }
-
     @Override
     public void onLoop() {
         DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
@@ -97,7 +73,7 @@ public class Intake extends Subsystem implements Loop
         }
         else 
         {
-            //stop(); //This is commented because it is conflicting with run();
+            stop();
         }
     }
 
@@ -106,9 +82,9 @@ public class Intake extends Subsystem implements Loop
         stop();
     }
 
-    public void set(double speed)
-    {
-        intakeMotor.set(ControlMode.PercentOutput, speed);
+    @Override
+    public void zeroSensors() {
+
     }
 
     @Override
@@ -116,8 +92,10 @@ public class Intake extends Subsystem implements Loop
         set(0.0);
     }
 
-    @Override
-    public void zeroSensors() {
 
+
+    public void set(double speed)
+    {
+        intakeMotor.set(ControlMode.PercentOutput, speed);
     }
 }

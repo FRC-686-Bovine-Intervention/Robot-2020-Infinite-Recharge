@@ -214,6 +214,7 @@ public class Shooter implements Loop {
 
         if(SmartDashboard.getBoolean("Shooter/Debug", false)){
             setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
+            SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
         }
 
         // if (!SmartDashboard.getBoolean("Shooter/Debug", false))

@@ -206,6 +206,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
+    //loopController.run(); //Check LoopController run() function. Might be preventing systems from running do to if(!_running)....
+
+
     // SmartDashboard.putNumber("Gyro reading", NavX.getInstance().getHeadingDeg());
     // if(Limelight.getInstance().getPipeline() !=0){
     //   Limelight.getInstance().setPipeline(0);
@@ -246,9 +249,8 @@ public class Robot extends TimedRobot {
   //   }
   }
 
-  /**
-   * This function is called periodically during test mode.
-   */
+  
+
   @Override
   public void testPeriodic() {
   }

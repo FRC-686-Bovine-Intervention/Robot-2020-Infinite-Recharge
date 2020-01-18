@@ -6,11 +6,11 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.subsystems.Shooter;
+import frc.robot.Constants;
 
 
 
@@ -168,7 +168,6 @@ public class Agitator
         kKiSpeed = I;
         kKdSpeed = D;
 
-        // int slot = kSlotIdxSpeed;
         int slot = kSlotIdxPos;
         agitatorMotor.selectProfileSlot(slot, Constants.kTalonPidIdx); 
         agitatorMotor.config_kP(slot, kKpSpeed, Constants.kTalonTimeoutMs); 

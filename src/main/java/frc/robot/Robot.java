@@ -78,11 +78,11 @@ public class Robot extends TimedRobot {
 
 
     loopController = new LoopController();
-    loopController.register(drive.getVelocityPIDLoop());
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(RobotStateLoop.getInstance());
-    loopController.register(VisionLoop.getInstance());
-    loopController.register(GoalStateLoop.getInstance());
+    // loopController.register(drive.getVelocityPIDLoop());
+    // loopController.register(DriveLoop.getInstance());
+    // loopController.register(RobotStateLoop.getInstance());
+    // loopController.register(VisionLoop.getInstance());
+    // loopController.register(GoalStateLoop.getInstance());
     loopController.register(Shooter.getInstance());
     //loopController.register(Intake.getInstance());
     //loopController.register(Agitator.getInstance()); //Agitator is not yet set up with the loop interface
@@ -92,6 +92,10 @@ public class Robot extends TimedRobot {
     shooter = Shooter.getInstance();
     SmartDashboard.putNumber("Shooter/RPM", 0);
     SmartDashboard.putBoolean("Shooter/Debug", false);
+    SmartDashboard.putBoolean("Shooter/UpdatePID", false);
+    SmartDashboard.putNumber("Shooter/Debug/kP", 0);
+    SmartDashboard.putNumber("Shooter/Debug/I", 0);
+    SmartDashboard.putNumber("Shooter/Debug/kD", 0);
     SmartDashboard.putNumber("Agitator/Degree", 0);
     SmartDashboard.putBoolean("Agitator/Debug", false);
 
@@ -202,23 +206,28 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    SmartDashboard.putNumber("Gyro reading", NavX.getInstance().getHeadingDeg());
-    if(Limelight.getInstance().getPipeline() !=0){
-      Limelight.getInstance().setPipeline(0);
-    }
+    // SmartDashboard.putNumber("Gyro reading", NavX.getInstance().getHeadingDeg());
+    // if(Limelight.getInstance().getPipeline() !=0){
+    //   Limelight.getInstance().setPipeline(0);
+    // }
 
-    selectedDriverControls.setDriverControls(smartDashboardInteractions.getDriverControlsSelection());
-    SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+    // selectedDriverControls.setDriverControls(smartDashboardInteractions.getDriverControlsSelection());
+    // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
 
-    boolean visionButton = selectedDriverControls.getBoolean(DriverControlsEnum.DRIVE_ASSIST);
+    // boolean visionButton = selectedDriverControls.getBoolean(DriverControlsEnum.DRIVE_ASSIST);
 
-		DriveCommand driveCmd = selectedDriverControls.getDriveCommand();
-		driveCmd = visionDriveAssistant.assist(driveCmd, visionButton);
+		// DriveCommand driveCmd = selectedDriverControls.getDriveCommand();
+		// driveCmd = visionDriveAssistant.assist(driveCmd, visionButton);
 
-		//modify drive controls based on buttons
-		drive.setOpenLoop(driveCmd);
+		// //modify drive controls based on buttons
+		// drive.setOpenLoop(driveCmd);
+
+
 
     shooter.run();
+
+
+
     //agitator.run();
    // intake.run();
 

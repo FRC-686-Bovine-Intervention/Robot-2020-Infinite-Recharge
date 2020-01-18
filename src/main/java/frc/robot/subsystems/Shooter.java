@@ -45,8 +45,8 @@ public class Shooter implements Loop {
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
 	public final double kKf = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-	public final double kKp = 0.025;	   
-	public final double kKd = 9.0;	// to resolve any overshoot, start at 10*Kp 
+	public final double kKp = 0.03;	   
+	public final double kKd = 2.0625;	// to resolve any overshoot, start at 10*Kp 
 	public final double kKi = 0.0;    
 
 	public static double kQuadEncoderCodesPerRev = 1024;
@@ -109,8 +109,9 @@ public class Shooter implements Loop {
 
 		// configure encoder
 		shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-		shooterMotor.setSensorPhase(true); // set so that positive motor input results in positive change in sensor value
-		shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
+		shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+        shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
+        shooterMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		
 		// set relevant frame periods to be at least as fast as periodic rate
 		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
@@ -135,6 +136,8 @@ public class Shooter implements Loop {
         // slave stuff
         shooterSlave.follow(shooterMotor);
         shooterSlave.setInverted(false);
+
+        
     }
 
 
@@ -196,38 +199,44 @@ public class Shooter implements Loop {
 
     public void run()
     {
-        SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+        // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
  
-        GoalEnum goal = GoalEnum.HIGH_GOAL;
-        if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
-        {
-            goal = GoalEnum.LOW_GOAL;
-            Limelight.getInstance().setPipeline(1);
-        } else {
-            Limelight.getInstance().setPipeline(0);
+        // GoalEnum goal = GoalEnum.HIGH_GOAL;
+        // if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
+        // {
+        //     goal = GoalEnum.LOW_GOAL;
+        //     Limelight.getInstance().setPipeline(1);
+        // } else {
+        //     Limelight.getInstance().setPipeline(0);
+        // }
+
+
+
+        if(SmartDashboard.getBoolean("Shooter/Debug", false)){
+            setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
         }
 
-        if (!SmartDashboard.getBoolean("Shooter/Debug", false))
-        {
-            if (driverControls.getBoolean(DriverControlsEnum.SHOOT))
-            {
-                setTarget(goal);
-            }
-            else
-            {
-                stop();
-            }
-        }
-        else
-        {
-            setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
-            double distance = handleDistance(camera.getTargetVerticalAngleRad(), goal)-kFrontToCameraDist;
-            if (camera.getIsTargetFound())
-            {  
-                SmartDashboard.putNumber("Shooter/Distance", distance);
-            }
-        }
-        SmartDashboard.putBoolean("Shooter/Found Target", camera.getIsTargetFound());
+        // if (!SmartDashboard.getBoolean("Shooter/Debug", false))
+        // {
+        //     if (driverControls.getBoolean(DriverControlsEnum.SHOOT))
+        //     {
+        //         setTarget(goal);
+        //     }
+        //     else
+        //     {
+        //         stop();
+        //     }
+        // }
+        // else
+        // {
+        //     setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
+        //     double distance = handleDistance(camera.getTargetVerticalAngleRad(), goal)-kFrontToCameraDist;
+        //     if (camera.getIsTargetFound())
+        //     {  
+        //         SmartDashboard.putNumber("Shooter/Distance", distance);
+        //     }
+        // }
+        // SmartDashboard.putBoolean("Shooter/Found Target", camera.getIsTargetFound());
     }
 
     public void setTarget(GoalEnum goal)

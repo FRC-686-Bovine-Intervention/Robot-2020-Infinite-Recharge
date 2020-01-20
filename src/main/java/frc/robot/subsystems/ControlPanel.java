@@ -164,6 +164,7 @@ public class ControlPanel implements Loop {
         Color detectedColor = colorSensor.getColor();
         ColorEnum detectedColorEnum = ColorEnum.UNKNOWN;
         ColorMatchResult match = colorMatch.matchClosestColor(detectedColor);
+        int proximity = colorSensor.getProximity();
         if(SmartDashboard.getBoolean("ControlPanel/Debug", false)){
             
         }
@@ -177,6 +178,7 @@ public class ControlPanel implements Loop {
         SmartDashboard.putNumber("ControlPanel/Blue", detectedColor.blue);
         SmartDashboard.putNumber("ControlPanel/Confidence", match.confidence*100);
         SmartDashboard.putString("ControlPanel/DetectedColor", detectedColorEnum.name());
+        SmartDashboard.putNumber("ControlPanel/Proximity", proximity);
     }
 
     public void setupColors()

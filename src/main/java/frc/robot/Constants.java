@@ -38,6 +38,7 @@ public class Constants extends ConstantsBase {
     public static int kRightMotorSlave1TalonId =    4;
     public static int kShooterTalonId =             31;
     public static int kShooterSlaveId =             32;
+    public static int kPanelMasterId =              41;
     public static int kIntakeTalonId =              6;
     public static int kAgitatorTalonId =            7;
     

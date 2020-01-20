@@ -7,33 +7,23 @@
 
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GyroBase;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeExecuter;
-import frc.robot.command_status.DriveCommand;
 import frc.robot.command_status.RobotState;
-import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.NavX;
-import frc.robot.lib.sensors.Limelight.LedMode;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Pose;
-import frc.robot.lib.util.Vector2d;
-import frc.robot.loops.DriveLoop;
-import frc.robot.loops.GoalStateLoop;
 import frc.robot.loops.LoopController;
-import frc.robot.loops.RobotStateLoop;
+import frc.robot.subsystems.ControlPanel;
 import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 import frc.robot.vision.VisionDriveAssistant;
-import frc.robot.vision.VisionLoop;
 import frc.robot.vision.VisionTargetList;
 
 /**
@@ -59,6 +49,7 @@ public class Robot extends TimedRobot {
   Limelight camera = Limelight.getInstance();
 
   Shooter shooter;
+  ControlPanel controlPanel;
   //Intake intake;
  // Agitator agitator;
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
@@ -73,6 +64,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     shooter = Shooter.getInstance();
+    controlPanel = ControlPanel.getInstance();
     //intake = Intake.getInstance();
     //agitator = Agitator.getInstance();
 
@@ -97,7 +89,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Shooter/Debug/I", 0);
     SmartDashboard.putNumber("Shooter/Debug/kD", 0);
     SmartDashboard.putNumber("Agitator/Degree", 0);
+    SmartDashboard.putBoolean("ControlPanel/Debug", false);
     SmartDashboard.putBoolean("Agitator/Debug", false);
+    controlPanel.setupColors();
 
     robotLogger = DataLogController.getRobotLogController();
     robotLogger.register(this.getLogger());
@@ -228,6 +222,7 @@ public class Robot extends TimedRobot {
 
 
     shooter.run();
+    controlPanel.run();
 
 
 

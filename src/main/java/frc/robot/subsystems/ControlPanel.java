@@ -173,12 +173,12 @@ public class ControlPanel implements Loop {
         else if (match.color == kRedTarget)     {detectedColorEnum = ColorEnum.RED;}
         else if (match.color == kYellowTarget)  {detectedColorEnum = ColorEnum.YELLOW;}
         else                                    {detectedColorEnum = ColorEnum.UNKNOWN;}
-        SmartDashboard.putNumber("ControlPanel/Red", detectedColor.red);
-        SmartDashboard.putNumber("ControlPanel/Green", detectedColor.green);
-        SmartDashboard.putNumber("ControlPanel/Blue", detectedColor.blue);
-        SmartDashboard.putNumber("ControlPanel/Confidence", match.confidence*100);
-        SmartDashboard.putString("ControlPanel/DetectedColor", detectedColorEnum.name());
-        SmartDashboard.putNumber("ControlPanel/Proximity", proximity);
+        SmartDashboard.putNumber("ControlPanel/Red",            detectedColor.red);
+        SmartDashboard.putNumber("ControlPanel/Green",          detectedColor.green);
+        SmartDashboard.putNumber("ControlPanel/Blue",           detectedColor.blue);
+        SmartDashboard.putNumber("ControlPanel/Confidence",     match.confidence*100);
+        SmartDashboard.putString("ControlPanel/DetectedColor",  detectedColorEnum.name());
+        SmartDashboard.putNumber("ControlPanel/Proximity",      proximity);
     }
 
     public void setupColors()

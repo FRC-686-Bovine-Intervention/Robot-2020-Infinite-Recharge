@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -6,7 +6,6 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-import com.sun.org.apache.bcel.internal.Const;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
@@ -74,12 +73,13 @@ public class Conveyor implements Loop
 
     public boolean shooterChecked = false;
 
-   private double targetAngle = 0.0;
-
     public Conveyor() 
     {
         conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
         conveyorSlave = new VictorSPX(Constants.kConveyorbeltSlaveID);
+
+        conveyorMaster.configFactoryDefault();
+        conveyorSlave.configFactoryDefault();
 
 
         conveyorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
@@ -129,6 +129,14 @@ public class Conveyor implements Loop
     @Override
     public void onLoop(){
         SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+
+        //Starts feeding when shooter has achieved a high enough speed
+        if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && shooterChecked){
+            setSpeed(60);
+        } else {
+            //Intentionally ignored while feeding in order to prevent jittering
+            shooterChecked = Shooter.getInstance().nearTarget(true);
+        }
     }
 
     @Override
@@ -143,6 +151,7 @@ public class Conveyor implements Loop
 
     public void stop()
     {
+        setSpeed(0);
     }
 
 

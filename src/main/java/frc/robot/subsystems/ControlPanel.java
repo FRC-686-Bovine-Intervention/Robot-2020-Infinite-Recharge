@@ -62,10 +62,10 @@ public class ControlPanel implements Loop {
     public static double targetRPM = 0;
     public static double kRPMErrorShooting = 360.0, kRPMErrorStopping = 20.0;
 
-    public static Color kBlueTarget = ColorMatch.makeColor(0.143, 0.427, 0.429);
-    public static Color kGreenTarget = ColorMatch.makeColor(0.197, 0.561, 0.240);
-    public static Color kRedTarget = ColorMatch.makeColor(0.561, 0.232, 0.114);
-    public static Color kYellowTarget = ColorMatch.makeColor(0.361, 0.524, 0.113);
+    public static Color kBlueTarget = ColorMatch.makeColor(0.12, 0.4, 0.48);
+    public static Color kGreenTarget = ColorMatch.makeColor(0.16, 0.57, 0.26);
+    public static Color kRedTarget = ColorMatch.makeColor(0.51, 0.34, 0.14);
+    public static Color kYellowTarget = ColorMatch.makeColor(0.31, 0.55, 0.12);
 
     public static enum ColorEnum
     {

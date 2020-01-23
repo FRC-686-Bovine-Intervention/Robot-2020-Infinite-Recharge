@@ -111,7 +111,6 @@ public class Shooter implements Loop {
 		shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
         shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
-        shooterMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		
 		// set relevant frame periods to be at least as fast as periodic rate
 		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
@@ -190,6 +189,7 @@ public class Shooter implements Loop {
     @Override
     public void onStart() {
         stop();
+        zeroSensors();
     }
 
     @Override
@@ -244,12 +244,18 @@ public class Shooter implements Loop {
     {
         setSpeed(0);
     }
+
+    public void zeroSensors(){
+        hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        turretMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+    }
     
 
 
     // Talon SRX reports position in rotations while in closed-loop Position mode
 	public static double encoderUnitsToRevolutions(int _encoderPosition) {	return (double)_encoderPosition / (double)kQuadEncoderUnitsPerRev; }
-	public static int revolutionsToEncoderUnits(double _rev) { return (int)(_rev * kQuadEncoderUnitsPerRev); }
+    public static int revolutionsToEncoderUnits(double _rev) { return (int)(_rev * kQuadEncoderUnitsPerRev); }
+    public static int degreesToEncoderUnits(double _deg) {return (int)((_deg/360.0)*kQuadEncoderCodesPerRev);}
 
 	// Talon SRX reports speed in RPM while in closed-loop Speed mode
 	public static double encoderUnitsPerFrameToRPM(int _encoderEdgesPerFrame) { return encoderUnitsToRevolutions(_encoderEdgesPerFrame) * 60.0 / kQuadEncoderStatusFramePeriod; }
@@ -267,7 +273,9 @@ public class Shooter implements Loop {
     }
 
     public void setHood(double degree){
-        double encoderTicks = ///Fill this in!!!!!!================================================================================================
+        //Relies on hood to be initialized properly
+        double encoderTicks = degreesToEncoderUnits(degree);
+        hoodMotor.set(ControlMode.Position, encoderTicks);
     }
     
 
@@ -301,12 +309,9 @@ public class Shooter implements Loop {
         double shooterCorrection = -driverControls.getAxis(DriverAxisEnum.SHOOTER_SPEED_CORRECTION)*kSliderMax;
         double nominalSpeed = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
         speed = nominalSpeed + shooterCorrection;
-
-        //Check setHood() --- needs work
         double hoodPosition = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][2], dataTable[keyL+1][2]);
         
-        
-        
+        setHood(hoodPosition);
         setSpeed(speed);
     }
 

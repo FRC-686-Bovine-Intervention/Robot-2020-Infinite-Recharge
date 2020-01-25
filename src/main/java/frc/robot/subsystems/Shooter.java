@@ -8,11 +8,13 @@ import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
+import frc.robot.command_status.DriveState;
 import frc.robot.lib.joystick.DriverAxisEnum;
-import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.lib.util.Kinematics;
+import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
 import frc.robot.lib.util.Vector2d;
 import frc.robot.loops.Loop;
 
@@ -315,6 +317,10 @@ public class Shooter implements Loop {
         setSpeed(speed);
     }
 
+
+
+
+
     public double getDistFromTarget(double angleRad){
         return (kGoalHeight-kCameraHeight)/(Math.tan(angleRad+(kCameraAngle * Vector2d.degreesToRadians)));
     }
@@ -337,6 +343,113 @@ public class Shooter implements Loop {
     {
         return (sH-sL)*Math.min((d-dL)/(dH-dL),1)+sL;
     }
+
+
+
+
+
+
+
+
+
+
+
+    //Cool Shooter Stuff by Roame=======================================
+
+    public static double targetHeight = 72.5; //Measured in inches
+    public static double shooterWheelRadius = 3.0; //Inches
+    public static double cameraAngle = 45;
+    public static double cameraAngleRad = Math.toRadians(cameraAngle);
+    public static Vector2d shooterPos = new Vector2d(-12.5, -12.5); //From camera in inches
+    public Vector2d targetPos;
+    public static double targetSmoothing = (1.0/20.0);
+
+    public static Vector2d shooterVelocity;
+
+
+    public void runShooter(){
+        Vector2d ballVelocity = calcBallVelocity();
+        double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI);
+
+        shooterMotor.set(ControlMode.Velocity, shooterRPM);
+        turretMotor.set(ControlMode.Position, ballVelocity.angle());
+    }
+
+
+    public Vector2d calcBallVelocity(){
+        Vector2d targetDisplacement = getTargetDisplacement();
+        double targetVelocityMag = getTargetBallVelMag(targetDisplacement.length());
+        Vector2d targetVelocity = new Vector2d(targetVelocityMag, 0); //Used to maintain magnitude
+        targetVelocity.rotate(targetDisplacement.angle()); //Rotating it back to the correct rotation 
+
+        Vector2d shooterVelocity = getShooterVelocity(); //Get the motion of the velocity
+
+        Vector2d targetBallVelocity = targetVelocity.sub(shooterVelocity); //Determine the necessary velocity of the ball being shot
+
+        return targetBallVelocity;
+    }
+
+
+    public Vector2d getTargetDisplacement(){
+        double targetY = targetHeight/Math.tan(camera.getTargetVerticalAngleRad());
+        double targetX = targetY*Math.tan(camera.getTargetHorizontalAngleRad());
+        Vector2d detectedTargetPos = new Vector2d(targetX, targetY);
+        detectedTargetPos = detectedTargetPos.sub(shooterPos); //Map the detected vector onto the shooter's center
+        detectedTargetPos = detectedTargetPos.rotate(getTurretAngleRad()); //This is used to rotate it back to the robot's perspective which is 'grounded'
+
+        if(targetPos == null){
+            //First time through
+            targetPos = detectedTargetPos;
+        } else {
+            //Otherwise just keep averaging the position
+            targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing);
+        }
+
+        return targetPos;
+    }
+
+    public Vector2d getShooterVelocity(){
+        double leftSpeed = DriveState.getInstance().getLeftSpeedInchesPerSec();
+        double rightSpeed = DriveState.getInstance().getRightSpeedInchesPerSec();
+        LinearAngularSpeed robotSpeed = Kinematics.forwardKinematics(leftSpeed, rightSpeed);
+        if(robotSpeed.angularSpeed > Math.PI/6.0){
+           //Only use if angular speed is of some significant amount
+           double motionRadius = robotSpeed.linearSpeed/robotSpeed.angularSpeed;
+           double shooterMotionRadius = lawOfCosines(motionRadius, shooterPos.length(), shooterPos.angle());
+           double shooterVelMagnitude = robotSpeed.angularSpeed*shooterMotionRadius;
+           shooterVelocity = new Vector2d(0, shooterVelMagnitude); //Shooter is considered '90' degrees as this is the direction of the robot
+        } else {
+            shooterVelocity = new Vector2d(0, robotSpeed.linearSpeed);
+        }
+
+        return shooterVelocity;
+    }
+
+    public double getTargetBallVelMag(double distance){
+        SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+
+        int keyL = getLinear(distance, dataTable);
+        double shooterCorrection = -driverControls.getAxis(DriverAxisEnum.SHOOTER_SPEED_CORRECTION)*kSliderMax;
+        double nominalSpeed = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
+        speed = nominalSpeed + shooterCorrection;
+        return (0.5*speed*shooterWheelRadius);
+    }
+
+
+    public double lawOfCosines(double _leg1, double _leg2, double angleRad){
+        return Math.sqrt(Math.pow(_leg1, 2) + Math.pow(_leg2, 2) - 2*_leg1*_leg2*Math.cos(angleRad));
+    }
+
+    public double getTurretAngleRad(){
+        return (turretMotor.getSelectedSensorPosition()/kQuadEncoderUnitsPerRev)*2*Math.PI;
+    }
+
+
+
+
+
+
+
     
 
 

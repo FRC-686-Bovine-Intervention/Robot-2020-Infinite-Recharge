@@ -152,25 +152,27 @@ public class RobotState
 	// 		Constants.kHatchCameraPoseThetaRad);
 
 	public synchronized Pose getFieldToCamera(double timestamp) {
-		Pose robotToCamera = new Pose(Constants.kHatchCameraPoseX, Constants.kHatchCameraPoseY, Constants.kHatchCameraPoseThetaRad);
+		//Pose robotToCamera = new Pose(Constants.kHatchCameraPoseX, Constants.kHatchCameraPoseY, Constants.kHatchCameraPoseThetaRad);
 		if (SelectedDriverControlsReversible.getInstance().getDrivingCargo())
 		{
-			robotToCamera = new Pose(Constants.kCargoCameraPoseX, Constants.kCargoCameraPoseY, Constants.kCargoCameraPoseThetaRad);
+			//robotToCamera = new Pose(Constants.kCargoCameraPoseX, Constants.kCargoCameraPoseY, Constants.kCargoCameraPoseThetaRad);
 		}
 		Pose fieldToRobot = getFieldToVehicle(timestamp);
-		Pose fieldToCamera = robotToCamera.changeCoordinateSystem(fieldToRobot);
-		return fieldToCamera;
+		//Pose fieldToCamera = robotToCamera.changeCoordinateSystem(fieldToRobot);
+		//return fieldToCamera;
+		return null;
 	}
 
 	public synchronized Pose getPredictedFieldToCamera(double _lookaheadTime) {
-		Pose robotToCamera = new Pose(Constants.kHatchCameraPoseX, Constants.kHatchCameraPoseY, Constants.kHatchCameraPoseThetaRad);
+		//Pose robotToCamera = new Pose(Constants.kHatchCameraPoseX, Constants.kHatchCameraPoseY, Constants.kHatchCameraPoseThetaRad);
 		if (SelectedDriverControlsReversible.getInstance().getDrivingCargo())
 		{
-			robotToCamera = new Pose(Constants.kCargoCameraPoseX, Constants.kCargoCameraPoseY, Constants.kCargoCameraPoseThetaRad);
+			//robotToCamera = new Pose(Constants.kCargoCameraPoseX, Constants.kCargoCameraPoseY, Constants.kCargoCameraPoseThetaRad);
 		}
 		Pose fieldToRobot = getPredictedFieldToVehicle(_lookaheadTime);
-		Pose fieldToCamera = robotToCamera.changeCoordinateSystem(fieldToRobot);
-		return fieldToCamera;
+		//Pose fieldToCamera = robotToCamera.changeCoordinateSystem(fieldToRobot);
+		//return fieldToCamera;
+		return null;
 	}
 
 	// Field to camera functions

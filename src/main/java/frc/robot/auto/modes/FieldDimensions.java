@@ -26,13 +26,13 @@ public class FieldDimensions
     public static double kHabWidthY = 128.0;        // not counting ramp
     public static double kHab3DepthX = 48.0;
 
-    // Robot starting poses
-	public static Pose centerLeftStartPose  = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, 0,                                             Math.PI);
-	public static Pose centerRightStartPose = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, 0,                                             Math.PI);	
-	public static Pose leftStartPose        = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, +kHabWidthY/2 - Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
-	public static Pose rightStartPose       = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, -kHabWidthY/2 + Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
-	public static Pose leftHab2StartPose    = new Pose(Constants.kCenterToFrontBumper, +kHabWidthY/2 - Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
-	public static Pose rightHab2StartPose   = new Pose(Constants.kCenterToFrontBumper, -kHabWidthY/2 + Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
+    // // Robot starting poses
+	// public static Pose centerLeftStartPose  = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, 0,                                             Math.PI);
+	// public static Pose centerRightStartPose = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, 0,                                             Math.PI);	
+	// public static Pose leftStartPose        = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, +kHabWidthY/2 - Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
+	// public static Pose rightStartPose       = new Pose(kHab3DepthX + Constants.kCenterToFrontBumper, -kHabWidthY/2 + Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
+	// public static Pose leftHab2StartPose    = new Pose(Constants.kCenterToFrontBumper, +kHabWidthY/2 - Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
+	// public static Pose rightHab2StartPose   = new Pose(Constants.kCenterToFrontBumper, -kHabWidthY/2 + Constants.kCenterToSideBumper, 0);  // side of robot aligned with edge of HAB
 
     // Rocket
     private static Vector2d kRocketCenter = new Vector2d(229.1, 153.3);
@@ -182,13 +182,13 @@ public class FieldDimensions
     
     // gets
     
-    // rightSide is set to true if the chosen start pose is on the right
-	public static Pose getHab1CenterLeftStartPose()     { rightSide = false;   return centerLeftStartPose; }	
-	public static Pose getHab1CenterRightStartPose()    { rightSide =  true;   return centerRightStartPose; }	
-	public static Pose getHab1LeftStartPose()           { rightSide = false;   return leftStartPose; }  
-    public static Pose getHab1RightStartPose()          { rightSide =  true;   return rightStartPose; } 
-	public static Pose getHab2LeftStartPose()           { rightSide = false;   return leftHab2StartPose; }  
-    public static Pose getHab2RightStartPose()          { rightSide =  true;   return rightHab2StartPose; } 
+    // // rightSide is set to true if the chosen start pose is on the right
+	// public static Pose getHab1CenterLeftStartPose()     { rightSide = false;   return centerLeftStartPose; }	
+	// public static Pose getHab1CenterRightStartPose()    { rightSide =  true;   return centerRightStartPose; }	
+	// public static Pose getHab1LeftStartPose()           { rightSide = false;   return leftStartPose; }  
+    // public static Pose getHab1RightStartPose()          { rightSide =  true;   return rightStartPose; } 
+	// public static Pose getHab2LeftStartPose()           { rightSide = false;   return leftHab2StartPose; }  
+    // public static Pose getHab2RightStartPose()          { rightSide =  true;   return rightHab2StartPose; } 
     
     public static Vector2d getCargoFrontSpacing()
     {
@@ -373,12 +373,12 @@ public class FieldDimensions
         Vector2d rv = new Vector2d();
         switch (_target)
         {
-            case CARGO_FRONT:   rv = kCargoFrontHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoFrontAngleRad)); break;
-            case CARGO_SIDE1:   rv = kCargoSide1HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
-            case CARGO_SIDE2:   rv = kCargoSide2HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
-            case CARGO_SIDE3:   rv = kCargoSide3HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
-            case ROCKET_NEAR:   rv = kNearRocketHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kNearRocketAngleRad)); break;
-            case ROCKET_FAR:    rv =  kFarRocketHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper,  kFarRocketAngleRad)); break;
+            // case CARGO_FRONT:   rv = kCargoFrontHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoFrontAngleRad)); break;
+            // case CARGO_SIDE1:   rv = kCargoSide1HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
+            // case CARGO_SIDE2:   rv = kCargoSide2HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
+            // case CARGO_SIDE3:   rv = kCargoSide3HatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kCargoSideAngleRad)); break;
+            // case ROCKET_NEAR:   rv = kNearRocketHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper, kNearRocketAngleRad)); break;
+            // case ROCKET_FAR:    rv =  kFarRocketHatchPosition.add( Vector2d.magnitudeAngle(Constants.kCenterToRearBumper,  kFarRocketAngleRad)); break;
         }
         if (rightSide)
         {
@@ -390,7 +390,7 @@ public class FieldDimensions
     public static Vector2d getRobotPositionAtHumanStation()
     {
         Vector2d rv = new Vector2d();
-        rv =  kHumanStationHatchPosition.add(Vector2d.magnitudeAngle(Constants.kHatchTargetDistanceThresholdFromCenterInches, kHumanStationAngleRad));
+        //rv =  kHumanStationHatchPosition.add(Vector2d.magnitudeAngle(Constants.kHatchTargetDistanceThresholdFromCenterInches, kHumanStationAngleRad));
         if (rightSide)
         {
             rv = rv.conj();

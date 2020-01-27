@@ -1,6 +1,6 @@
 package frc.robot.auto.actions;
 
-import frc.robot.command_status.RobotState;
+//import frc.robot.command_status.RobotState;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Path;
 import frc.robot.lib.util.PathFollower;
@@ -28,7 +28,7 @@ public class PathFollowerAction implements Action
     @Override
     public void start() 
     {
-		System.out.println("PathFollowerAction.start(), pose = " + RobotState.getInstance().getLatestFieldToVehicle().toString());
+		//System.out.println("PathFollowerAction.start(), pose = " + RobotState.getInstance().getLatestFieldToVehicle().toString());
 		driveCtrl.start();
     }
 
@@ -54,7 +54,7 @@ public class PathFollowerAction implements Action
     @Override
     public void done() 
     {
-		System.out.println("PathFollowerAction.done(),  pose = " + RobotState.getInstance().getLatestFieldToVehicle().toString());
+		//System.out.println("PathFollowerAction.done(),  pose = " + RobotState.getInstance().getLatestFieldToVehicle().toString());
 		// cleanup code, if any
 		driveCtrl.done();
     }

@@ -79,6 +79,8 @@ public class ControlPanel implements Loop {
 
     public SpinnerStateEnum SpinnerState = SpinnerStateEnum.IDLE;
 
+    //Ignore this comment
+
     public ControlPanel() 
     {
         panelMaster = new TalonSRX(Constants.kPanelMasterId);

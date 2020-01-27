@@ -80,6 +80,20 @@ public class Shooter implements Loop {
 
     public static double targetRPM = 0;
     public static double kRPMErrorShooting = 360.0, kRPMErrorStopping = 20.0;
+
+
+    //Variables for Target Location and Shooter build =======================
+    public static double targetHeight = 72.5; //Measured in inches
+    public static double shooterWheelRadius = 3.0; //Inches
+    public static double cameraAngle = 45;
+    public static double cameraAngleRad = Math.toRadians(cameraAngle);
+    public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
+    public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
+    
+    public Vector2d targetPos;
+    public static double targetSmoothing = (1.0/20.0);
+
+    public static Vector2d shooterVelocity;
  
     // Distance vs. RPM & Hood Pos Table
 
@@ -196,45 +210,20 @@ public class Shooter implements Loop {
 
     @Override
     public void onLoop() {
-        // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
- 
-        // GoalEnum goal = GoalEnum.HIGH_GOAL;
-        // if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
-        // {
-        //     goal = GoalEnum.LOW_GOAL;
-        //     Limelight.getInstance().setPipeline(1);
-        // } else {
-        //     Limelight.getInstance().setPipeline(0);
-        // }
+        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
+            Vector2d ballVelocity = calcBallVelocity(); //This is the target velocity of the ball immediately after leaving the robot
+            double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
+            double hoodDeg = calcHoodPosition();
+            double turretDeg = Math.toDegrees(ballVelocity.angle());
 
-
-
-        if(SmartDashboard.getBoolean("Shooter/Debug", false)){
+            //Controlling subsystems:
+            setShooterRPM(shooterRPM);
+            setHoodDeg(hoodDeg);
+            setTurretDeg(turretDeg);
+        } else {
             setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
             SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
         }
-
-        // if (!SmartDashboard.getBoolean("Shooter/Debug", false))
-        // {
-        //     if (driverControls.getBoolean(DriverControlsEnum.SHOOT))
-        //     {
-        //         setTarget(goal);
-        //     }
-        //     else
-        //     {
-        //         stop();
-        //     }
-        // }
-        // else
-        // {
-        //     setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
-        //     double distance = handleDistance(camera.getTargetVerticalAngleRad(), goal)-kFrontToCameraDist;
-        //     if (camera.getIsTargetFound())
-        //     {  
-        //         SmartDashboard.putNumber("Shooter/Distance", distance);
-        //     }
-        // }
-        // SmartDashboard.putBoolean("Shooter/Found Target", camera.getIsTargetFound());
     }
 
     @Override
@@ -252,6 +241,8 @@ public class Shooter implements Loop {
         turretMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
     }
     
+
+
 
 
     // Talon SRX reports position in rotations while in closed-loop Position mode
@@ -354,39 +345,10 @@ public class Shooter implements Loop {
 
 
 
+    //=======================================================
+    //Primary Functions for Shooting
+    //=======================================================
 
-
-
-
-
-
-
-    //Cool Shooter Stuff by Roame=======================================
-
-    public static double targetHeight = 72.5; //Measured in inches
-    public static double shooterWheelRadius = 3.0; //Inches
-    public static double cameraAngle = 45;
-    public static double cameraAngleRad = Math.toRadians(cameraAngle);
-    public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
-    public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
-    
-    public Vector2d targetPos;
-    public static double targetSmoothing = (1.0/20.0);
-
-    public static Vector2d shooterVelocity;
-
-
-    public void runShooter(){
-        Vector2d ballVelocity = calcBallVelocity(); //This is the target velocity of the ball immediately after leaving the robot
-        double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
-        double hoodDeg = calcHoodPosition();
-        double turretDeg = Math.toDegrees(ballVelocity.angle());
-
-        //Controlling subsystems:
-        setShooterRPM(shooterRPM);
-        setHoodDeg(hoodDeg);
-        setTurretDeg(turretDeg);
-    }
 
     public double calcHoodPosition(){
         //Returns hood position in degrees

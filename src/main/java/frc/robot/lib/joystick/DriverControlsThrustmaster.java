@@ -60,7 +60,6 @@ public class DriverControlsThrustmaster extends DriverControlsBase
 
         switch (_control)
         {
-            case INTAKE:                        return !controller.getButton(Thrustmaster.kTopButton4);
             case SHOOT:                         return controller.getButton(Thrustmaster.kTriggerButton);
             case DRIVE_ASSIST:                  return controller.getButton(Thrustmaster.kLeftThumbButton);
             case QUICK_TURN:                    return false;

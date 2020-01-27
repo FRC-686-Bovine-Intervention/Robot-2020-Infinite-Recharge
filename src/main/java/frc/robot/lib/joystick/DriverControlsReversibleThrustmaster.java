@@ -64,11 +64,7 @@ public class DriverControlsReversibleThrustmaster extends ReversibleDriverContro
     {
         switch (_control)
         {
-            case INTAKE:                        return false;
-            case OUTTAKE:                       return false;
             case SHOOT:                         return lStick.getButton(Thrustmaster.kTriggerButton) || lStick.getButton(Thrustmaster.kBottomThumbButton);
-            case TARGET_LOW:                    return lStick.getButton(Thrustmaster.kBottomThumbButton) && !lStick.getButton(Thrustmaster.kTriggerButton);
-            case QUICK_TURN:                    return false;
             default:                            return false;
         }
     }

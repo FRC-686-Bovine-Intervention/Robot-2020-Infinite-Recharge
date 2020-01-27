@@ -8,7 +8,6 @@ import frc.robot.Constants;
 import frc.robot.command_status.DriveCommand;
 import frc.robot.command_status.GoalStates;
 import frc.robot.command_status.GoalStates.GoalState;
-import frc.robot.command_status.RobotState;
 import frc.robot.lib.joystick.SelectedDriverControlsReversible;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.util.DataLogger;
@@ -80,11 +79,11 @@ public class VisionDriveAssistant
         // if we don't see a target, continue under driver control
         if (haveGoal)
         {
-            kTargetDistanceThresholdFromCenterInches = Constants.kHatchTargetDistanceThresholdFromCenterInches;
+            kTargetDistanceThresholdFromCenterInches = 0.0;
             SmartDashboard.putNumber("DistFromCenter1", kTargetDistanceThresholdFromCenterInches); //========================
 			if (SelectedDriverControlsReversible.getInstance().getDrivingCargo())
 			{
-				kTargetDistanceThresholdFromCenterInches = Constants.kCargoTargetDistanceThresholdFromCenterInches;
+				kTargetDistanceThresholdFromCenterInches = 0.0;
 			}
 
             // Get range and angle to target

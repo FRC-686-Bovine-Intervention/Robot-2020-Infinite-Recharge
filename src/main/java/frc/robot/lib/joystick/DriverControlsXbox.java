@@ -58,11 +58,7 @@ public class DriverControlsXbox extends DriverControlsBase
     {
         switch (_control)
         {
-            case INTAKE:                        return controller.getButton(Xbox.kButtonA);
-            case OUTTAKE:                       return controller.getButton(Xbox.kButtonX);
             case SHOOT:                         return controller.getAxisAsButton(Xbox.kRTriggerAxis);
-            case TARGET_LOW:                    return controller.getButton(Xbox.kButtonRB) && !controller.getAxisAsButton(Xbox.kRTriggerAxis);
-            case UNJAM:                         return controller.getButton(Xbox.kButtonY);
             case DRIVE_ASSIST:                  return controller.getButton(Xbox.kButtonLB);
             case QUICK_TURN:                    return false;
             default:                            return false;

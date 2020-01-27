@@ -3,11 +3,9 @@ package frc.robot.lib.util;
 import frc.robot.Constants;
 import frc.robot.command_status.DriveCommand;
 import frc.robot.command_status.GoalStates;
-import frc.robot.command_status.RobotState;
 import frc.robot.command_status.GoalStates.GoalState;
 import frc.robot.lib.util.Kinematics.WheelSpeed;
 import frc.robot.loops.DriveLoop;
-import frc.robot.loops.GoalStateLoop;
 import frc.robot.subsystems.Drive;
 
 import java.util.Optional;
@@ -33,7 +31,6 @@ public class PathFollower
 	public PathVisionState state;
 	
 	public Drive drive = Drive.getInstance();
-	public RobotState robotState = RobotState.getInstance();
 	public GoalStates goalStates = GoalStates.getInstance();
 	
 	Path path;
@@ -77,7 +74,6 @@ public class PathFollower
 
     public void start() 
     {
-		prevSpeed = robotState.getSpeed();
 		prevTime  = -1;		
         remainingDistance = Double.MAX_VALUE;	// make sure we run update() at least once before finishing
     }
@@ -89,7 +85,6 @@ public class PathFollower
 		// Get inputs
 		//---------------------------------------------------
 		
-		currentPose = robotState.getLatestFieldToVehicle();		
 		currentTime = Timer.getFPGATimestamp();
 
 		//---------------------------------------------------
@@ -223,12 +218,11 @@ public class PathFollower
 
             // Get range and angle to target
             fieldToGoal = currentFieldToGoal.get();
-            fieldToShooter = RobotState.getInstance().getFieldToShooter(currentTime);
 		    Vector2d shooterToGoal = fieldToGoal.sub(fieldToShooter.getPosition());
 	    	distanceToGoal = shooterToGoal.length();
 			bearingToGoal = shooterToGoal.angle() - fieldToShooter.getHeading(); 	// bearing relative to shooter's heading
 
-			kTargetDistanceThresholdFromCenterInches = Constants.kHatchTargetDistanceThresholdFromCenterInches;			
+			kTargetDistanceThresholdFromCenterInches = 0.0;			
             distanceToTargetInches = distanceToGoal - kTargetDistanceThresholdFromCenterInches;   // distance from camera
             bearingToTarget = bearingToGoal;
 
@@ -314,11 +308,6 @@ public class PathFollower
     		put("PathVision/left",  cmd.getLeftMotor() );
        		put("PathVision/right", cmd.getRightMotor() );
       		put("PathVision/neutralMode", DriveCommand.getNeutralMode().toString() );
-      		
-       		Pose odometry = robotState.getLatestFieldToVehicle();
-            put("PathVision/positionX",  odometry.getX());
-            put("PathVision/positionY",  odometry.getY());
-            put("PathVision/headingDeg", odometry.getHeadingDeg());
         	
 			put("PathVision/reversed", path.getReverseDirection());
 			put("PathVision/state", state.toString());

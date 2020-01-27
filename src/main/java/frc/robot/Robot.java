@@ -12,18 +12,19 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeExecuter;
-import frc.robot.command_status.RobotState;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.NavX;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Pose;
+import frc.robot.loops.DriveLoop;
 import frc.robot.loops.LoopController;
 import frc.robot.subsystems.ControlPanel;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Shooter;
 import frc.robot.vision.VisionDriveAssistant;
+import frc.robot.vision.VisionLoop;
 import frc.robot.vision.VisionTargetList;
 
 /**
@@ -42,46 +43,31 @@ public class Robot extends TimedRobot {
   private AutoModeExecuter autoModeExecuter = null;
   private LoopController loopController;
 
- 	RobotState robotState = RobotState.getInstance();
 	Drive drive = Drive.getInstance();
 	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
 
-  Shooter shooter;
   ControlPanel controlPanel;
-  //Intake intake;
- // Agitator agitator;
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
 
   DataLogController robotLogger;
   OperationalMode operationalMode = OperationalMode.getInstance();
 
-  /**
-   * This function is run when the robot is first started up and should be
-   * used for any initialization code.
-   */
+
   @Override
   public void robotInit() {
-    shooter = Shooter.getInstance();
     controlPanel = ControlPanel.getInstance();
-    //intake = Intake.getInstance();
-    //agitator = Agitator.getInstance();
-
 
     loopController = new LoopController();
-    // loopController.register(drive.getVelocityPIDLoop());
-    // loopController.register(DriveLoop.getInstance());
-    // loopController.register(RobotStateLoop.getInstance());
-    // loopController.register(VisionLoop.getInstance());
-    // loopController.register(GoalStateLoop.getInstance());
+    loopController.register(drive.getVelocityPIDLoop());
+    loopController.register(DriveLoop.getInstance());
+    loopController.register(VisionLoop.getInstance());
+
     loopController.register(Shooter.getInstance());
-    //loopController.register(Intake.getInstance());
-    //loopController.register(Agitator.getInstance()); //Agitator is not yet set up with the loop interface
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
-    shooter = Shooter.getInstance();
     SmartDashboard.putNumber("Shooter/RPM", 0);
     SmartDashboard.putBoolean("Shooter/Debug", false);
     SmartDashboard.putBoolean("Shooter/UpdatePID", false);
@@ -97,18 +83,13 @@ public class Robot extends TimedRobot {
     robotLogger.register(this.getLogger());
   }
 
-  /**
-   * This function is called every robot packet, no matter the mode. Use
-   * this for items like diagnostics that you want ran during disabled,
-   * autonomous, teleoperated and test.
-   *
-   * <p>This runs after the mode specific periodic functions, but before
-   * LiveWindow and SmartDashboard integrated updating.
-   */
+
+
   @Override
   public void robotPeriodic() {
     loopController.run();	
   }
+
 
 
   @Override
@@ -200,48 +181,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void teleopPeriodic() {
-    //loopController.run(); //Check LoopController run() function. Might be preventing systems from running do to if(!_running)....
+    loopController.run(); //To run the majority of the subsystems
 
-
-    // SmartDashboard.putNumber("Gyro reading", NavX.getInstance().getHeadingDeg());
-    // if(Limelight.getInstance().getPipeline() !=0){
-    //   Limelight.getInstance().setPipeline(0);
-    // }
-
-    // selectedDriverControls.setDriverControls(smartDashboardInteractions.getDriverControlsSelection());
-    // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
-
-    // boolean visionButton = selectedDriverControls.getBoolean(DriverControlsEnum.DRIVE_ASSIST);
-
-		// DriveCommand driveCmd = selectedDriverControls.getDriveCommand();
-		// driveCmd = visionDriveAssistant.assist(driveCmd, visionButton);
-
-		// //modify drive controls based on buttons
-		// drive.setOpenLoop(driveCmd);
-
-
-
-    shooter.run();
     controlPanel.run();
-
-
-
-    //agitator.run();
-   // intake.run();
-
-  //   if (SmartDashboard.getBoolean("Agitator/Debug", false))
-  //   {
-  //     double agitatorSet = SmartDashboard.getNumber("Agitator/Degree", 0);
-  //     agitator.setDegree(agitatorSet);
-  //   }
-  //   if (driverControls.getBoolean(DriverControlsEnum.DRIVE_ASSIST)||driverControls.getBoolean(DriverControlsEnum.SHOOT))
-  //   {
-  //     camera.setLEDMode(LedMode.kOn);
-  //   }
-  //   else
-  //   {
-  //     camera.setLEDMode(LedMode.kOff);
-  //   }
   }
 
   
@@ -253,22 +195,18 @@ public class Robot extends TimedRobot {
 
   public void setInitialPose (Pose _initialPose)
   {
-    robotState.reset(_initialPose);
     System.out.println("InitialPose: " + _initialPose);
   }
   
   public void zeroAllSensors()
   {
     drive.zeroSensors();
-  //  agitator.zeroSensors();
   }
   
   public void stopAll()
   {
     drive.stop();
-   // intake.stop();
-   // agitator.stop();
-    shooter.stop();
+    Shooter.getInstance().stop();
   }
 
 

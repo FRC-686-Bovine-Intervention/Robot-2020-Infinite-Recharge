@@ -60,11 +60,7 @@ public class DriverControlsThrustmasterRight extends DriverControlsBase
 
         switch (_control)
         {
-            case INTAKE:                        return !controller.getButton(Thrustmaster.kTopButton4) && (controller.getPOV()==0);//!controller.getButton(Thrustmaster.kTopButton4) && (driveCmd.getLeftMotor() > 0.1 || driveCmd.getRightMotor() > 0.1);
-            case OUTTAKE:                       return controller.getPOV()==180;
             case SHOOT:                         return !controller.getButton(Thrustmaster.kTopButton3) && controller.getButton(Thrustmaster.kTriggerButton) || controller.getButton(Thrustmaster.kBottomThumbButton);
-            case TARGET_LOW:                    return controller.getButton(Thrustmaster.kBottomThumbButton) && !controller.getButton(Thrustmaster.kTriggerButton);
-            case UNJAM:                         return controller.getButton(Thrustmaster.kRightThumbButton);
             case DRIVE_ASSIST:                  return controller.getButton(Thrustmaster.kLeftThumbButton);
             case QUICK_TURN:                    return false;
             default:                            return false;

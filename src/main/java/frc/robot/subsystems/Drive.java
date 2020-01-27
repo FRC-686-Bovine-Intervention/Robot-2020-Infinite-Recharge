@@ -44,9 +44,6 @@ public class Drive extends Subsystem
 
 
 
-
-
-
 	// The constructor instantiates all of the drivetrain components when the
 	// robot powers up
 	private Drive() 

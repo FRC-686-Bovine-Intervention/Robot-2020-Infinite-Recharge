@@ -3,12 +3,10 @@ package frc.robot.lib.joystick;
 // A list of all driver controls to be mapped to joystick buttons
 
 public enum DriverControlsEnum {    // Controls Description
-    SHOOT,                          // Target High goals
-    TARGET_LOW,                     // Target Low goals
-    INTAKE,                         // Turn on Intake
-    OUTTAKE,                        // Reverse Intake to unclog chute
-    DRIVE_ASSIST,                   // Drives assistes
+    SHOOT,                          // Shoot at outer high
+    INTAKE_GROUND,                  // Collect from ground
+    INTAKE_PLAYERSTATION,           // Collect from Player Station
+    DRIVE_ASSIST,                   // Drives assists
     QUICK_TURN,                     // to make TriggerDrive joysticks happy
-    UNJAM                           // To reverse agitator to fix any jams
 }
 

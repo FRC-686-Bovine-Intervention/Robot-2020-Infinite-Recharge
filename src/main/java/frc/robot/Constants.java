@@ -42,10 +42,14 @@ public class Constants extends ConstantsBase {
     public static int kIntakeTalonId =              6;
     public static int kConveyorbeltMasterID =       7;
     public static int kConveyorbeltSlaveID =        8;
+
+
     public static int kPCMID =                      100;
 
     public static int kMainSolenoidChannel =        1000;
     public static int kSecondarySolenoidChannel =   1001;
+    public static int kLiftLockSolenoidChannel =    1002;
+    public static int kPTOSolenoidChannel =         1003;
     
 
 

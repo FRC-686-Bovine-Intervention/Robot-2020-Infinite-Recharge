@@ -173,9 +173,6 @@ public class ControlPanel implements Loop {
         Color detectedColor = colorSensor.getColor();
         ColorEnum detectedColorEnum = ColorEnum.UNKNOWN;
         ColorMatchResult match = colorMatch.matchClosestColor(detectedColor);
-        if(SmartDashboard.getBoolean("ControlPanel/Debug", false)){
-            
-        }
         if      (match.color == kBlueTarget)    {detectedColorEnum = ColorEnum.BLUE;}
         else if (match.color == kGreenTarget)   {detectedColorEnum = ColorEnum.GREEN;}
         else if (match.color == kRedTarget)     {detectedColorEnum = ColorEnum.RED;}
@@ -186,6 +183,58 @@ public class ControlPanel implements Loop {
         SmartDashboard.putNumber("ControlPanel/Blue",           detectedColor.blue);
         SmartDashboard.putNumber("ControlPanel/Confidence",     match.confidence*100);
         SmartDashboard.putString("ControlPanel/DetectedColor",  detectedColorEnum.name());
+        SmartDashboard.putString("ControlPanel/ConvertedColor", convertColor(detectedColorEnum).name());
+        if(!SmartDashboard.getBoolean("ControlPanel/Debug", false)){
+            /*
+            When sensors activate
+            align sensor
+            if previous action was nothing then
+                rotation control
+            else
+                position contol
+            */
+        }
+        else
+        {
+
+        }
+    }
+
+    public void rotationControl()
+    {
+        /*
+        save color
+        set motor to 60 rpm * gear ratio
+        count number of times saved color goes past
+        if number >= 6 then
+            stop
+        if driver doesn't drive away within 2 seconds then
+            do again
+        set previous action to rotate
+        */
+    }
+
+    public void positionControl()
+    {
+        /*
+        set motor to 60 rpm * gear ratio
+        if color == convert FMS color then
+            stop
+        if driver doesn't drive away within 2 seconds then
+            do again
+        */
+    }
+
+    public ColorEnum convertColor(ColorEnum color)
+    {
+        switch (color)
+        {
+            case BLUE:      return ColorEnum.RED;
+            case RED:       return ColorEnum.BLUE;
+            case YELLOW:    return ColorEnum.GREEN;
+            case GREEN:     return ColorEnum.YELLOW;
+            default:        return ColorEnum.UNKNOWN;
+        }
     }
 
     public void setupColors()

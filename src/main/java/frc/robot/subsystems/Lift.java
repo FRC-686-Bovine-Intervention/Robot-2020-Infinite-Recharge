@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Solenoid;
 import frc.robot.Constants;
 import frc.robot.lib.joystick.DriverControlsBase;
@@ -18,25 +19,23 @@ public class Lift extends Subsystem implements Loop {
     }
 
     private Solenoid PTOSolenoid, lockSolenoid;
+    private DigitalInput liftRetractionSensor;
 
     private boolean PTOLastState = false;
-	private boolean liftLockLastState = false;
-	private boolean liftLocked = false;
-
-	public enum LiftState {
-		RETRACTED, EXTENDED, TRANSITIONING
-    }
+    private boolean liftRetracted = false;
+    
+    
     public enum PTOTansmissionState {
         DRIVE_ENABLED, LIFT_ENABLED
     }
 
-    public LiftState cLiftState = LiftState.RETRACTED;
     public PTOTansmissionState cPTOState = PTOTansmissionState.DRIVE_ENABLED;
 
 
     public Lift(){
         PTOSolenoid = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoidChannel);
         lockSolenoid = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoidChannel);
+        liftRetractionSensor = new DigitalInput(Constants.kLiftSensorChannel);
     }
 
     @Override
@@ -48,11 +47,21 @@ public class Lift extends Subsystem implements Loop {
     public void onLoop() {
         DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
 		if(driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO) && !PTOLastState){
-			
+			if(cPTOState == PTOTansmissionState.DRIVE_ENABLED){
+                shiftToLift();
+            } else if(cPTOState == PTOTansmissionState.LIFT_ENABLED){
+                shiftToDrive();
+            }
         }
-        
         PTOLastState = driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO);
-		liftLockLastState = driverControls.getBoolean(DriverControlsEnum.LIFT_LOCK);
+
+        if(driverControls.getBoolean(DriverControlsEnum.LOCK_LIFT) && checkLift()) {
+            lockLift();
+        }
+
+        if(driverControls.getBoolean(DriverControlsEnum.UNLOCK_LIFT)){
+            unlockLift();
+        }
     }
 
     @Override
@@ -81,12 +90,18 @@ public class Lift extends Subsystem implements Loop {
     }
 
     public void shiftToDrive(){
-        lockSolenoid.set(false);
+        PTOSolenoid.set(false);
+        cPTOState = PTOTansmissionState.DRIVE_ENABLED;
     }
 
     public void shiftToLift(){
-        lockSolenoid.set(true);
+        PTOSolenoid.set(true);
+        cPTOState = PTOTansmissionState.LIFT_ENABLED;
     }
 
+
+    public boolean checkLift(){
+        return !liftRetractionSensor.get();
+    }
 
 }

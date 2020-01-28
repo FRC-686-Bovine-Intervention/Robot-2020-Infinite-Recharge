@@ -69,7 +69,8 @@ public class DriverControlsReversibleThrustmaster extends ReversibleDriverContro
             case INTAKE_PLAYERSTATION:          return !rStick.getButton(Thrustmaster.kBottomThumbButton) && !buttonBoard.getButton(ButtonBoard.kButtonRB) && buttonBoard.getButton(ButtonBoard.kButtonY);
             case INTAKE_STORED:                 return !rStick.getButton(Thrustmaster.kBottomThumbButton) && buttonBoard.getButton(ButtonBoard.kButtonRB) && !buttonBoard.getButton(ButtonBoard.kButtonY);
             case DRIVE_ASSIST:                  return false;
-            case LIFT_LOCK:                     return false;
+            case LOCK_LIFT:                     return false;
+            case UNLOCK_LIFT:                   return false;
             case TOGGLE_PTO:                    return false;
             case QUICK_TURN:                    return false;
             default:                            return false;

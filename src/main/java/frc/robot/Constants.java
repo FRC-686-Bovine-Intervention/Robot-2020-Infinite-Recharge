@@ -50,6 +50,8 @@ public class Constants extends ConstantsBase {
     public static int kSecondarySolenoidChannel =   1001;
     public static int kLiftLockSolenoidChannel =    1002;
     public static int kPTOSolenoidChannel =         1003;
+
+    public static int kLiftSensorChannel =          1010;
     
 
 

@@ -41,6 +41,12 @@ public class Intake extends Subsystem implements Loop
     public static final int kPeakCurrentDuration = 200;
     public static final int kContinuousCurrentLimit = 20;
 
+    public static enum IntakeState {
+        STORED, PLAYER_STATION, GROUND
+    }
+    private IntakeState currentState = IntakeState.STORED;
+    private boolean toggleLastState = false;
+
 
     public Intake(){
         intakeMotor = new VictorSPX(Constants.kIntakeTalonId);
@@ -49,7 +55,6 @@ public class Intake extends Subsystem implements Loop
 
         mainSolenoid = new Solenoid(Constants.kPCMID, Constants.kMainSolenoidChannel);
         secondarySolenoid = new Solenoid(Constants.kPCMID, Constants.kSecondarySolenoidChannel);
-
     }
     
 
@@ -63,22 +68,32 @@ public class Intake extends Subsystem implements Loop
     public void onLoop() {
         DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
 
-        //No current driver controls for manual retraction
-        if (driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND))
+        if (driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND) && !toggleLastState)
         {
-            setPower(+Constants.kIntakeVoltage);
-            extendToFloor();
+            if(currentState == IntakeState.STORED){
+                //Toggle to floor
+                extendToFloor();
+            } else if(currentState == IntakeState.GROUND){
+                //Toggle to stored
+                retract();
+            } else if(currentState == IntakeState.PLAYER_STATION){
+                //Jump to ground position
+                extendToPlayerStation();
+            }
         }
         else if(driverControls.getBoolean(DriverControlsEnum.INTAKE_PLAYERSTATION))
         {
-            setPower(+Constants.kIntakeVoltage);
             extendToPlayerStation();
         } 
-        else
+        else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
         {
-            setPower(0);
+            retract();
         }
+
+        toggleLastState = driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND);
     }
+
+
 
     @Override
     public void onStop() {
@@ -104,16 +119,22 @@ public class Intake extends Subsystem implements Loop
     }
 
     public void extendToFloor(){
+        currentState = IntakeState.GROUND;
+        setPower(+Constants.kIntakeVoltage);
         mainSolenoid.set(true);
         secondarySolenoid.set(false);
     }
 
     public void extendToPlayerStation(){
+        currentState = IntakeState.GROUND;
+        setPower(+Constants.kIntakeVoltage);
         mainSolenoid.set(true);
         secondarySolenoid.set(true);
     }
 
     public void retract(){
+        currentState = IntakeState.STORED;
+        setPower(0);
         mainSolenoid.set(false);
         secondarySolenoid.set(false);
     }

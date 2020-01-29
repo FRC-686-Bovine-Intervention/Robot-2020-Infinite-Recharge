@@ -11,8 +11,6 @@ import frc.robot.lib.util.Vector2d;
 
 public class FieldDimensions 
 {
-    public static boolean rightSide = false;
-
     public enum TargetPositionEnum
     {
 

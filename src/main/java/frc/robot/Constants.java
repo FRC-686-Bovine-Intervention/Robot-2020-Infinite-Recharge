@@ -30,22 +30,24 @@ public class Constants extends ConstantsBase {
 
 
     // Hardware Port Definitions
-    public static int kLeftMotorMasterTalonId =     1;
-    public static int kLeftMotorSlave1TalonId =     2;
-    public static int kRightMotorMasterTalonId =    3;
-    public static int kRightMotorSlave1TalonId =    4;
+    public static int kPCMID =                      01;
+    public static int kRightMotorMasterTalonId =    11;
+    public static int kRightMotorSlave1TalonId =    12;
+    public static int kLeftMotorMasterTalonId =     13;
+    public static int kLeftMotorSlave1TalonId =     14;
+    public static int kIntakeTalonId =              21;
+    public static int kConveyorbeltMasterID =       22;
+    public static int kConveyorbeltSlaveID =        23;
     public static int kShooterTalonId =             31;
     public static int kShooterSlaveId =             32;
-    public static int kShooterHoodID =              10000;
-    public static int kShooterTurretID =            100000;
+    public static int kShooterTurretID =            33;
+    public static int kShooterHoodID =              34;
     public static int kPanelMasterId =              41;
-    public static int kIntakeTalonId =              6;
-    public static int kConveyorbeltMasterID =       7;
-    public static int kConveyorbeltSlaveID =        8;
-    public static int kPCMID =                      100;
 
-    public static int kMainSolenoidChannel =        1000;
-    public static int kSecondarySolenoidChannel =   1001;
+    public static int kMainSolenoidChannel =        0;
+    public static int kSecondarySolenoidChannel =   1;
+    public static int kPTOSolenoidChannel =         2;
+    public static int kLiftLockSolenoidChannel =    3;
     
 
 

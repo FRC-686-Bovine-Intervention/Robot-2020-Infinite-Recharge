@@ -222,6 +222,7 @@ public class Shooter implements Loop {
             setTurretDeg(turretDeg);
         } else {
             setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
+            setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
             SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
         }
     }

@@ -22,6 +22,7 @@ import frc.robot.loops.DriveLoop;
 import frc.robot.loops.LoopController;
 import frc.robot.subsystems.ControlPanel;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Lift;
 import frc.robot.subsystems.Shooter;
 import frc.robot.vision.VisionDriveAssistant;
 import frc.robot.vision.VisionLoop;
@@ -43,12 +44,10 @@ public class Robot extends TimedRobot {
   private AutoModeExecuter autoModeExecuter = null;
   private LoopController loopController;
 
-	Drive drive = Drive.getInstance();
 	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
-  Limelight camera = Limelight.getInstance();
+  //Limelight camera = Limelight.getInstance();
 
-  ControlPanel controlPanel;
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
 
   DataLogController robotLogger;
@@ -57,14 +56,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    controlPanel = ControlPanel.getInstance();
-
     loopController = new LoopController();
-    loopController.register(drive.getVelocityPIDLoop());
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(VisionLoop.getInstance());
-
-    loopController.register(Shooter.getInstance());
+    loopController.register(Lift.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
@@ -77,7 +70,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Agitator/Degree", 0);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
     SmartDashboard.putBoolean("Agitator/Debug", false);
-    controlPanel.setupColors();
 
     robotLogger = DataLogController.getRobotLogController();
     robotLogger.register(this.getLogger());
@@ -118,7 +110,7 @@ public class Robot extends TimedRobot {
 	{
 			stopAll(); // stop all actuators
 
-			camera.disabledPeriodic();
+			//camera.disabledPeriodic();
 	}
 
   /**
@@ -145,7 +137,7 @@ public class Robot extends TimedRobot {
     loopController.start();
 		Shuffleboard.startRecording();
 
-    camera.autoInit();
+    //camera.autoInit();
 
     m_autoSelected = m_chooser.getSelected();
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
@@ -174,7 +166,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     loopController.start();
-    camera.teleopInit();
+    //camera.teleopInit();
   }
   /**
    * This function is called periodically during operator control.
@@ -183,7 +175,6 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     loopController.run(); //To run the majority of the subsystems
 
-    controlPanel.run();
   }
 
   
@@ -200,13 +191,12 @@ public class Robot extends TimedRobot {
   
   public void zeroAllSensors()
   {
-    drive.zeroSensors();
+    //drive.zeroSensors();
   }
   
   public void stopAll()
   {
-    drive.stop();
-    Shooter.getInstance().stop();
+    //drive.stop();
   }
 
 

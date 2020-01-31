@@ -18,12 +18,14 @@ public class Lift extends Subsystem implements Loop {
         return instance;
     }
 
-    private Solenoid PTOSolenoid, lockSolenoid;
+    private Solenoid PTOLeftSolenoid, PTORightSolenoid, lockSolenoid;
     private DigitalInput liftRetractionSensor;
 
     private boolean PTOLastState = false;
     private boolean liftRetracted = false;
-    
+
+    private boolean solenoidDriveActiveVal = true; //What value the solenoid is at when drive is activated
+    private boolean lockActiveVal = true; //The value activates the lock
     
     public enum PTOTansmissionState {
         DRIVE_ENABLED, LIFT_ENABLED
@@ -33,7 +35,7 @@ public class Lift extends Subsystem implements Loop {
 
 
     public Lift(){
-        PTOSolenoid = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoidChannel);
+        PTOLeftSolenoid = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoidChannel);
         lockSolenoid = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoidChannel);
         liftRetractionSensor = new DigitalInput(Constants.kLiftSensorChannel);
     }
@@ -82,20 +84,20 @@ public class Lift extends Subsystem implements Loop {
 
 
     public void lockLift(){
-        lockSolenoid.set(true);
+        lockSolenoid.set(lockActiveVal);
     }
 
     public void unlockLift(){
-        lockSolenoid.set(false);
+        lockSolenoid.set(!lockActiveVal);
     }
 
     public void shiftToDrive(){
-        PTOSolenoid.set(false);
+        PTOLeftSolenoid.set(solenoidDriveActiveVal);
         cPTOState = PTOTansmissionState.DRIVE_ENABLED;
     }
 
-    public void shiftToLift(){
-        PTOSolenoid.set(true);
+    public void shiftToLift(!solenoidDriveActiveVal){
+        PTOLeftSolenoid.set(true);
         cPTOState = PTOTansmissionState.LIFT_ENABLED;
     }
 

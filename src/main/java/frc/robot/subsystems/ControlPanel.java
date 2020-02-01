@@ -212,6 +212,17 @@ public class ControlPanel implements Loop {
             do again
         set previous action to rotate
         */
+        ColorEnum savedColor = detectedColorEnum;
+        panelMaster.set(ControlMode.Velocity, 60);
+        int rotation = 0;
+        while (rotation >= 6)
+        {
+            if (detectedColorEnum == savedColor)
+            {
+                rotation += 1;
+            }
+        }
+        
     }
 
     public void positionControl()

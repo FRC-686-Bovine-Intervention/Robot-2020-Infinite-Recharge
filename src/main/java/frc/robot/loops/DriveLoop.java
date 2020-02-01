@@ -6,10 +6,10 @@ import java.util.List;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.SensorCollection;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.TalonFXSensorCollection;
 import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.Timer;
@@ -47,8 +47,8 @@ public class DriveLoop implements Loop
 	private static GyroBase gyro;
     private DriveState driveState;
     
-	public final TalonSRX lMotorMaster;
-	public final TalonSRX rMotorMaster;
+	public final TalonFX lMotorMaster;
+	public final TalonFX rMotorMaster;
 	public final List<BaseMotorController> lMotorSlaves;
 	public final List<BaseMotorController> rMotorSlaves;
 
@@ -140,8 +140,8 @@ public class DriveLoop implements Loop
 		/*****************************************************************
 		 * Configure Master Motor Controllers
 		 *****************************************************************/
-		lMotorMaster = new TalonSRX(Constants.kLeftMotorMasterTalonId);
-		rMotorMaster = new TalonSRX(Constants.kRightMotorMasterTalonId);
+		lMotorMaster = new TalonFX(Constants.kLeftMotorMasterTalonId);
+		rMotorMaster = new TalonFX(Constants.kRightMotorMasterTalonId);
         
 		// Get status at 100Hz (faster than default 50 Hz)
 		lMotorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 10, Constants.kTalonTimeoutMs);
@@ -453,11 +453,11 @@ public class DriveLoop implements Loop
 	{
 		if (newCmd.getResetEncoders())
 		{
-			SensorCollection collection = lMotorMaster.getSensorCollection();
-			collection.setQuadraturePosition(0, Constants.kTalonTimeoutMs);
+			TalonFXSensorCollection collection = lMotorMaster.getSensorCollection();
+			collection.setIntegratedSensorPosition(0, Constants.kTalonTimeoutMs);
 			
 			collection = rMotorMaster.getSensorCollection();
-			collection.setQuadraturePosition(0, Constants.kTalonTimeoutMs);
+			collection.setIntegratedSensorPosition(0, Constants.kTalonTimeoutMs);
 			
 			gyro.zeroSensor();  
 			// calibration to desired initial pose is done in RobotState.reset() called from Robot.autonomousInit()  

@@ -57,8 +57,8 @@ public class DriveLoop implements Loop
 
 	// Motor Controller Inversions
 	
-    public static boolean kLeftMotorInverted = false;
-    public static boolean kRightMotorInverted = true;
+    public static boolean kLeftMotorInverted = true;
+    public static boolean kRightMotorInverted = false;
     public static boolean kLeftMotorSensorPhase = true;
     public static boolean kRightMotorSensorPhase = true;
 

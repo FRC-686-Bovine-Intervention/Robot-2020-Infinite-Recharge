@@ -38,12 +38,12 @@ public class Robot extends TimedRobot {
   private AutoModeExecuter autoModeExecuter = null;
   private LoopController loopController;
 
+	VisionTargetList visionTargetList = VisionTargetList.getInstance();
+	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
+  Limelight camera = Limelight.getInstance();
 	Drive drive = Drive.getInstance();
-	// VisionTargetList visionTargetList = VisionTargetList.getInstance();
-	// VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
-  // Limelight camera = Limelight.getInstance();
 
-  ControlPanel controlPanel;
+  //ControlPanel controlPanel;
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
 
   DataLogController robotLogger;
@@ -57,12 +57,13 @@ public class Robot extends TimedRobot {
     loopController = new LoopController();
     loopController.register(drive.getVelocityPIDLoop());
     loopController.register(DriveLoop.getInstance());
-    // loopController.register(VisionLoop.getInstance());
+    loopController.register(VisionLoop.getInstance());
 
-    // loopController.register(Shooter.getInstance());
+    //loopController.register(Shooter.getInstance());
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
     SmartDashboard.putNumber("Shooter/RPM", 0);
+    SmartDashboard.putNumber("Shooter/HoodDegree", 0);
     SmartDashboard.putBoolean("Shooter/Debug", false);
     SmartDashboard.putBoolean("Shooter/UpdatePID", false);
     SmartDashboard.putNumber("Shooter/Debug/kP", 0);
@@ -71,6 +72,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Agitator/Degree", 0);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
     SmartDashboard.putBoolean("Agitator/Debug", false);
+    SmartDashboard.putNumber("Shooter/TargetDist", 0);
     //controlPanel.setupColors();
 
     robotLogger = DataLogController.getRobotLogController();
@@ -168,7 +170,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     loopController.start();
-    //camera.teleopInit();
+    camera.teleopInit();
   }
   /**
    * This function is called periodically during operator control.
@@ -196,12 +198,13 @@ public class Robot extends TimedRobot {
   
   public void zeroAllSensors()
   {
-    drive.zeroSensors();
+    //drive.zeroSensors();
   }
   
   public void stopAll()
   {
     drive.stop();
+    Shooter.getInstance().stop();
   }
 
 

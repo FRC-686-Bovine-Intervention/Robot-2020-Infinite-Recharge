@@ -33,8 +33,8 @@ public class Robot extends TimedRobot {
 	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
-  Drive drive = Drive.getInstance();
-  
+
+  //Drive drive = Drive.getInstance();
   //ControlPanel controlPanel;
 
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
@@ -48,11 +48,11 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(Intake.getInstance());
-    loopController.register(Conveyor.getInstance());
+    // loopController.register(DriveLoop.getInstance());
+    // loopController.register(Intake.getInstance());
+    // loopController.register(Conveyor.getInstance());
     loopController.register(Shooter.getInstance());
-    loopController.register(Lift.getInstance());
+    // loopController.register(Lift.getInstance());
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
     SmartDashboard.putNumber("Shooter/RPM", 0);

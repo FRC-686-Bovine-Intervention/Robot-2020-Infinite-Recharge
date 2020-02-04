@@ -48,7 +48,7 @@ public class Robot extends TimedRobot {
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
 
-  ControlPanel controlPanel;
+  //ControlPanel controlPanel;
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
 
   DataLogController robotLogger;
@@ -57,14 +57,14 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    controlPanel = ControlPanel.getInstance();
+    //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
     //loopController.register(drive.getVelocityPIDLoop());
     //loopController.register(DriveLoop.getInstance());
     loopController.register(VisionLoop.getInstance());
 
-    loopController.register(Shooter.getInstance());
+    //loopController.register(Shooter.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
@@ -78,7 +78,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Agitator/Degree", 0);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
     SmartDashboard.putBoolean("Agitator/Debug", false);
-    controlPanel.setupColors();
+    SmartDashboard.putNumber("Shooter/TargetDist", 0);
+    //controlPanel.setupColors();
 
     robotLogger = DataLogController.getRobotLogController();
     robotLogger.register(this.getLogger());
@@ -174,7 +175,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    loopController.start();
+    //loopController.start();
     camera.teleopInit();
   }
   /**
@@ -184,6 +185,7 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     //loopController.run(); //To run the majority of the subsystems
 
+    Shooter.getInstance().getTargetDisplacement();
     //controlPanel.run();
   }
 

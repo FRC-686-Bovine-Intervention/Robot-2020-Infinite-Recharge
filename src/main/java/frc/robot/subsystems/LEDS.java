@@ -1,6 +1,6 @@
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.AddressableLED;
+import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 
 public class LEDS {
 
@@ -12,9 +12,9 @@ public class LEDS {
     public int LEDLength;
     public int syncTimeMicroSeconds;
 
-    AddressableLED(int LEDPort){
+    // AddressableLED(int LEDPort){
         
-    }
+    // }
 
     void setBitTiming(int lowTime0NanoSeconds,int highTime0NanoSeconds,int lowTime1NanoSeconds, int highTime1NanoSeconds){
 

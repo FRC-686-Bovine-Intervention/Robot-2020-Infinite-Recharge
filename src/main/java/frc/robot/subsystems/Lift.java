@@ -96,8 +96,8 @@ public class Lift extends Subsystem implements Loop {
         cPTOState = PTOTansmissionState.DRIVE_ENABLED;
     }
 
-    public void shiftToLift(!solenoidDriveActiveVal){
-        PTOLeftSolenoid.set(true);
+    public void shiftToLift(){
+        PTOLeftSolenoid.set(!solenoidDriveActiveVal);
         cPTOState = PTOTansmissionState.LIFT_ENABLED;
     }
 

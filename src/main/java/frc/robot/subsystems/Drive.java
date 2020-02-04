@@ -24,7 +24,7 @@ import frc.robot.loops.Loop;
 
 
 
-public class Drive extends Subsystem 
+public class Drive extends Subsystem
 {
 	// singleton class
 	private static Drive instance = null;

@@ -80,10 +80,10 @@ public class Shooter implements Loop {
 
 
     //Variables for Target Location and Shooter build =======================
-    public static double targetHeight = 12; //Measured in inches
+    public static double targetHeight = 18.75; //Measured in inches
     public static double cameraHeight = 0;
     public static double shooterWheelRadius = 3.0; //Inches
-    public static double cameraAngleDeg = 10;
+    public static double cameraAngleDeg = 18; //From the horizontal
     public static double cameraAngleRad = Math.toRadians(cameraAngleDeg);
     public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
     public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
@@ -215,9 +215,9 @@ public class Shooter implements Loop {
             double turretDeg = Math.toDegrees(ballVelocity.angle());
 
             //Controlling subsystems:
-            setShooterRPM(shooterRPM);
-            setHoodDeg(hoodDeg);
-            setTurretDeg(turretDeg);
+            // setShooterRPM(shooterRPM);
+            // setHoodDeg(hoodDeg);
+            // setTurretDeg(turretDeg);
         } else {
             getTargetDisplacement(); //Used to update smart dashboard
             // setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));

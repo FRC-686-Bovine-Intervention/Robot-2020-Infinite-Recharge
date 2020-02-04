@@ -161,7 +161,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     loopController.run(); //To run the majority of the subsystems
-    drive.setOpenLoop(selectedDriverControls.getDriveCommand());
+    //drive.setOpenLoop(selectedDriverControls.getDriveCommand());
 
     //controlPanel.run();
   }
@@ -180,13 +180,13 @@ public class Robot extends TimedRobot {
   
   public void zeroAllSensors()
   {
-    drive.zeroSensors();
+    //drive.zeroSensors();
   }
   
   public void stopAll()
   {
     loopController.stop();
-    drive.stop();
+    //drive.stop();
   }
 
 

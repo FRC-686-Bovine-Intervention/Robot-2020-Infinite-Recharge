@@ -21,6 +21,11 @@ import frc.robot.loops.DriveLoop;
 import frc.robot.loops.LoopController;
 import frc.robot.subsystems.ControlPanel;
 import frc.robot.subsystems.Drive;
+import frc.robot.subsystems.Lift;
+import frc.robot.subsystems.Shooter;
+import frc.robot.vision.VisionDriveAssistant;
+import frc.robot.vision.VisionLoop;
+import frc.robot.vision.VisionTargetList;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -55,9 +60,7 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    loopController.register(drive.getVelocityPIDLoop());
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(VisionLoop.getInstance());
+    loopController.register(Lift.getInstance());
 
     //loopController.register(Shooter.getInstance());
 
@@ -170,7 +173,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     loopController.start();
-    camera.teleopInit();
+    //camera.teleopInit();
   }
   /**
    * This function is called periodically during operator control.
@@ -203,8 +206,7 @@ public class Robot extends TimedRobot {
   
   public void stopAll()
   {
-    drive.stop();
-    Shooter.getInstance().stop();
+    //drive.stop();
   }
 
 

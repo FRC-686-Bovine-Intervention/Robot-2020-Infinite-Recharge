@@ -43,11 +43,18 @@ public class Constants extends ConstantsBase {
     public static int kShooterTurretID =            33;
     public static int kShooterHoodID =              34;
     public static int kPanelMasterId =              41;
+    public static int kIntakeTalonId =              6;
+    public static int kConveyorbeltMasterID =       7;
+    public static int kConveyorbeltSlaveID =        8;
+
+
+    public static int kPCMID =                      100;
 
     public static int kMainSolenoidChannel =        0;
     public static int kSecondarySolenoidChannel =   1;
     public static int kPTOSolenoidChannel =         2;
     public static int kLiftLockSolenoidChannel =    3;
+    public static int kLiftSensorChannel =          1010;
     
 
 

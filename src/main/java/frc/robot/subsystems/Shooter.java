@@ -15,6 +15,7 @@ import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
+import frc.robot.lib.sensors.NavX;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Kinematics;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
@@ -97,6 +98,10 @@ public class Shooter implements Loop {
 
     public Vector2d shooterVelocity;
 
+
+    public static double startAngleDeg = 30; //0 degrees is pointing directly at the outer port, CCW is positive
+    public double stepDeg = 2;
+    public static double searchSweepDeg = 90;
 
     public static double maxRotationTrackingDeg = 360;
     public static double maxRotationDeg = 720;
@@ -297,7 +302,16 @@ public class Shooter implements Loop {
                     //Look around
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    setTurretDeg(123);
+                    
+                    double nextPos = Math.toDegrees(getTurretAbsoluteAngleRad()) + stepDeg;
+                    double robotHeading = NavX.getInstance().getHeadingDeg()+startAngleDeg;
+                    double turretHeading = nextPos + (Math.PI/2.0);
+                    
+                    if(turretHeading > robotHeading+(searchSweepDeg/2.0) || turretHeading < robotHeading-(searchSweepDeg/2.0)){
+                        stepDeg *= -1.0; //reverse direction
+                    }
+
+                    setTurretDeg(nextPos);
                     break;
 
                 case TRACKING:

@@ -92,7 +92,18 @@ public class Shooter implements Loop {
     public static double targetSmoothing = (1.0/10.0);
 
     public Vector2d shooterVelocity;
- 
+
+    public static double maxRotationDeg = 720;
+    public static double maxRotationRad = Math.toRadians(maxRotationDeg);
+    public static double searchingVelocityRPM = 0.5; 
+
+
+    public enum ShooterState {
+        SHOOTING, TRACKING, SEARCHING, IDLING
+    }
+    ShooterState cState = ShooterState.SEARCHING;
+
+
     // Distance vs. RPM & Hood Pos Table
 
     public double[][] dataTable = {
@@ -209,20 +220,49 @@ public class Shooter implements Loop {
     @Override
     public void onLoop() {
         if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
-            Vector2d ballVelocity = calcBallVelocity(); //This is the target velocity of the ball immediately after leaving the robot
-            double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
-            double hoodDeg = calcHoodPosition();
-            double turretDeg = Math.toDegrees(ballVelocity.angle());
+            if(!camera.getIsTargetFound()){
+                cState = ShooterState.IDLING;
+            }
 
-            //Controlling subsystems:
-            // setShooterRPM(shooterRPM);
-            // setHoodDeg(hoodDeg);
-            // setTurretDeg(turretDeg);
+
+            switch(cState){
+                case IDLING:
+                    //Hold everything in place
+                    setShooterRPM(0);
+                    setTurretDeg(0);
+                    setHoodDeg(0);
+                    break;
+
+                case SEARCHING:
+                    //Look around
+                    setShooterRPM(0);
+                    setHoodDeg(0);
+                    setTurretDeg(Math.toDegrees(getTurretAngleRad())+);
+                    break;
+
+                case TRACKING:
+
+                    break;
+
+                case SHOOTING:
+                    Vector2d ballVelocity = calcBallVelocity(); //This is the target velocity of the ball immediately after leaving the robot
+                    double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
+                    double hoodDeg = calcHoodPosition();
+                    double turretDeg = Math.toDegrees(ballVelocity.angle());
+
+                    //Controlling subsystems:
+                    setShooterRPM(shooterRPM);
+                    setHoodDeg(hoodDeg);
+                    setTurretDeg(turretDeg);
+                    break;
+
+                default:
+                    break;
+            }
         } else {
-            getTargetDisplacement(); //Used to update smart dashboard
-            // setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
-            // setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
-            // SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
+            setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
+            setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
+            SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
         }
     }
 
@@ -256,6 +296,9 @@ public class Shooter implements Loop {
         //Relies on hood to be initialized properly
         double encoderUnits = degreesToEncoderUnits(degree);
         hoodMotor.set(ControlMode.Position, encoderUnits);
+        if(Math.abs(getTurretAngleRad()) > maxRotationRad){
+
+        }
     }
 
     public void setTurretDeg(double degrees){
@@ -367,6 +410,14 @@ public class Shooter implements Loop {
     public double getTurretAngleRad(){
         //Turret should be zeroed when facing front of robot
         return ((double)turretMotor.getSelectedSensorPosition()/(double)kQuadEncoderCodesPerRev)*(2.0*Math.PI);
+    }
+
+    public double getTurretAbsoluteAngleRad(){
+        //Returns angle within pi to -pi. Positive is CCW
+        double radians = ((double)turretMotor.getSelectedSensorPosition()/(double)kQuadEncoderCodesPerRev)*(2.0*Math.PI);
+        double adjustedRad = Math.abs(radians % (2.0*Math.PI));
+        adjustedRad = adjustedRad < Math.PI ? adjustedRad : adjustedRad-(2.0*Math.PI);
+        return adjustedRad;
     }
 
 

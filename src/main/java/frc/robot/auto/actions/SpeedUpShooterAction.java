@@ -3,6 +3,7 @@ package frc.robot.auto.actions;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.subsystems.Shooter;
+import frc.robot.auto.modes.EightBallTrenchAuto;;
 
 public class SpeedUpShooterAction implements Action {
     //This function determines the necessary speed for the shooter and gets it up to speed

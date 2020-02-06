@@ -2,6 +2,13 @@ package frc.robot.auto.modes;
 
 import frc.robot.auto.AutoModeBase;
 import frc.robot.auto.AutoModeEndedException;
+import frc.robot.auto.actions.FeedBallsAction;
+import frc.robot.auto.actions.IntakeAction;
+import frc.robot.auto.actions.IntakeStopAction;
+import frc.robot.auto.actions.PathFollowerAction;
+import frc.robot.auto.actions.SpeedUpShooterAction;
+import frc.robot.auto.actions.WaitAction;
+import frc.robot.auto.actions.setTurretAction;
 import frc.robot.lib.util.Path;
 import frc.robot.lib.util.Path.Waypoint;
 
@@ -19,7 +26,12 @@ public class EightBallTrenchAuto extends AutoModeBase {
     protected void routine() throws AutoModeEndedException 
     {
         
-        boolean doneShooting = true;
+        int doneShooting = 3;   //three is a testing time to make sure we know that a path is about to start
+        final double targetDistance;
+        final int shooterStop = 0;
+        final int ballCount = 3;
+        final int ballNumber = 3;
+
 
         Path backupToTrenchPath = new Path();     //lineup using limelight feed
         backupToTrenchPath.add(new Waypoint());//start line
@@ -35,18 +47,27 @@ public class EightBallTrenchAuto extends AutoModeBase {
 
         // Actions--------------------------------------------------------------------------------------------------------------------------------
         //run action - shoot
-        runAction(new ShootAction);
+        runAction(new setTurretAction());
+        runAction(new SpeedUpShooterAction(targetDistance));
+        runAction(new FeedBallsAction(ballCount));
         runAction(new WaitAction(doneShooting));
+        runAction(new FeedBallsAction(ballNumber));
+        runAction(new SpeedUpShooterAction(shooterStop));
         //backup path to start of trench
         runAction(new PathFollowerAction(backupToTrenchPath));
         //intake action
-        runAction(new IntakeAction()aqaq);
+        runAction(new IntakeAction());
+        runAction(new IntakeStopAction());
         //drive forward path while intaking
         runAction(new PathFollowerAction(intakeTrenchPath));
         //lineup turret action
-        runAction(new TurretAction);
+        runAction(new setTurretAction());
         //run action - shoot   
-        runAction(new ShootAction); 
+        runAction(new SpeedUpShooterAction(targetDistance));
+        runAction(new FeedBallsAction(ballCount));
+        runAction(new WaitAction(doneShooting));
+        runAction(new FeedBallsAction(ballNumber));
+        runAction(new SpeedUpShooterAction(shooterStop)); 
                  
     }
 }

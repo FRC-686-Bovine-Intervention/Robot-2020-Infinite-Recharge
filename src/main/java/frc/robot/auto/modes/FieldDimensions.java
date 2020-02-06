@@ -18,8 +18,6 @@ public class FieldDimensions
 
     }
 
-    //Red is to the right (postive x)
-
 	// dimensions of field components
 	public static double kFieldLengthX = 648;       // 54'
 	public static double kFieldLengthY = 324;       // 27'
@@ -40,17 +38,6 @@ public class FieldDimensions
     public static double allianceStopBeforeTrenchx = 342.834;
     public static double allianceTrenchMiddley = 313.905;
 
-    //Balls
-    public static double centerBlueSideBallx = 268.728;
-    public static double centerBlueSideBally = 165.930;
-    public static double centerBlueSideMiddleBallx = 262.39;
-    public static double centerBlueSideMiddleBally = 181.227;
-    public static double centerBlueSidePostBallx = 256.053;
-    public static double centerBlueSidePostBally = 196.524;
-    public static double centerRedSidePostBallx = 263.174;
-    public static double centerRedSidePostBally = 220.930;
-    public static double centerRedSideFarBallx = 278.473;
-    public static double centerRedSideFarBally = 227.267;
 
 
 

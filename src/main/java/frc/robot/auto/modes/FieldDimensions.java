@@ -24,23 +24,7 @@ public class FieldDimensions
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
 	private static final DataLogger logger = new DataLogger()
     {
         @Override

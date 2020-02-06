@@ -38,7 +38,7 @@ public class EightBallTrenchAuto extends AutoModeBase {
         //backup path to start of trench
         runAction(new PathFollowerAction(backupToTrenchPath));
         //intake action
-        runAction(new IntakeAction);
+        runAction(new IntakeAction()aqaq);
         //drive forward path while intaking
         runAction(new PathFollowerAction(intakeTrenchPath));
         //lineup turret action

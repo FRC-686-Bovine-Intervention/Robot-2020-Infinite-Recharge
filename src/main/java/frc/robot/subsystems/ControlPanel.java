@@ -89,6 +89,8 @@ public class ControlPanel implements Loop {
 
     public SpinnerStateEnum SpinnerState = SpinnerStateEnum.IDLE;
 
+    public static double targetDistFromWall = 6; //inches between ultra and wall
+
     //Ignore this comment
 
     public ControlPanel() 
@@ -232,7 +234,8 @@ public class ControlPanel implements Loop {
         SmartDashboard.putString("ControlPanel/ConvertedColor", convertColor(detectedColorEnum).name());
         if(!SmartDashboard.getBoolean("ControlPanel/Debug", false)){
             if(checkTouchSensors()){
-                
+                double adjustDist = targetDistFromWall - getUltraSonicDistance(); //Positive adjust indicates too close, adjust slide away from wall
+
             }
             /*
             When sensors activate
@@ -274,6 +277,13 @@ public class ControlPanel implements Loop {
         */
     }
 
+    public void adjustSensor(double adjustInches){
+        //Positive adjust indicates sensor must move away from sensed wall
+        
+    }
+
+
+
     public ColorEnum convertColor(ColorEnum color)
     {
         switch (color)
@@ -302,6 +312,10 @@ public class ControlPanel implements Loop {
 
     private boolean checkTouchSensors(){
         return rightTouchSensor.get() && leftTouchSensor.get();
+    }
+
+    private double getUltraSonicDistance(){
+        return ultrasonic.update();
     }
 
 

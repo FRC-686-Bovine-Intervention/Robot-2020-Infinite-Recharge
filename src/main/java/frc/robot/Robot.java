@@ -33,8 +33,8 @@ public class Robot extends TimedRobot {
 	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
-  Drive drive = Drive.getInstance();
-  
+
+  //Drive drive = Drive.getInstance();
   //ControlPanel controlPanel;
 
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
@@ -48,11 +48,11 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(Intake.getInstance());
-    loopController.register(Conveyor.getInstance());
+    // loopController.register(DriveLoop.getInstance());
+    // loopController.register(Intake.getInstance());
+    // loopController.register(Conveyor.getInstance());
     loopController.register(Shooter.getInstance());
-    loopController.register(Lift.getInstance());
+    // loopController.register(Lift.getInstance());
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
     SmartDashboard.putNumber("Shooter/RPM", 0);
@@ -161,7 +161,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     loopController.run(); //To run the majority of the subsystems
-    drive.setOpenLoop(selectedDriverControls.getDriveCommand());
+    //drive.setOpenLoop(selectedDriverControls.getDriveCommand());
 
     //controlPanel.run();
   }
@@ -180,13 +180,13 @@ public class Robot extends TimedRobot {
   
   public void zeroAllSensors()
   {
-    drive.zeroSensors();
+    //drive.zeroSensors();
   }
   
   public void stopAll()
   {
     loopController.stop();
-    drive.stop();
+    //drive.stop();
   }
 
 

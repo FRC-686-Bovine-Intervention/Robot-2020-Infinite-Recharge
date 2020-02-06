@@ -11,6 +11,8 @@ import frc.robot.lib.util.Vector2d;
 
 public class FieldDimensions 
 {
+
+    private FieldDimensions(){}
     public enum TargetPositionEnum
     {
 
@@ -23,12 +25,19 @@ public class FieldDimensions
 	public static double kFieldLengthY = 324;       // 27'
     
 
+    //Start Positions
+    //Port is also one of these but is located elsewhere
+    public static double middleStartPosy = 180.0;
+    public static double playerStationy = 119.0;
+
+    //Field-based positions
     public static double startLineDist = 149.188;
     public static double portY = 247.00;
     public static double opponentTrenchBallx = 278.456;
     public static double opponentTrenchBally = 64.705;
     public static double allianceTrenchCloseEdgex = 234.817;
     public static double allianceTrenchFarEdgex = 448.817;
+    public static double allianceStopBeforeTrenchx = 342.834;
     public static double allianceTrenchMiddley = 313.905;
 
     //Balls
@@ -48,7 +57,7 @@ public class FieldDimensions
     public static Vector2d portStartPos = new Vector2d(startLineDist, portY);
     public static Vector2d opponentTrenchBallPos = new Vector2d(opponentTrenchBallx, opponentTrenchBally);
     public static Vector2d allianceTrenchClosePos = new Vector2d(allianceTrenchCloseEdgex, allianceTrenchMiddley);
-    public static Vector2d allianceTrenchFarPos = new Vector2d(allianceTrenchFarEdgex, allianceTrenchMiddley);
+    public static Vector2d allianceTrenchFarPos = new Vector2d(allianceStopBeforeTrenchx, allianceTrenchMiddley);
 
     //Balls
     public static Vector2d centerBlueSideBallPos = new Vector2d(centerBlueSideBallx, centerBlueSideBally);
@@ -56,6 +65,11 @@ public class FieldDimensions
     public static Vector2d centerBlueSidePosBallPos = new Vector2d(centerBlueSidePostBallx, centerBlueSidePostBally);
     public static Vector2d centerRedSidePostBallPos = new Vector2d(centerRedSidePostBallx, centerRedSidePostBally);
     public static Vector2d centerRedSideFarBallPos = new Vector2d(centerRedSideFarBallx, centerRedSideFarBally);
+
+
+    public static Pose portStartPose = new Pose(startLineDist, portY, 0.0);
+    public static Pose middleStartPose = new Pose(startLineDist, middleStartPosy, 0.0);
+    public static Pose playerStationStartPose = new Pose(startLineDist, playerStationy, 0.0);
 
 
 

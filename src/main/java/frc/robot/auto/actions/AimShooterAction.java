@@ -24,8 +24,8 @@ public class AimShooterAction implements Action {
     public Vector2d lastTargetPos = null;
 
     
-    public AimShooterAction(double suggestedAngle) {
-        backupAngle = suggestedAngle;
+    public AimShooterAction(double suggestedDeg) {
+        backupAngle = suggestedDeg;
     }
 
 

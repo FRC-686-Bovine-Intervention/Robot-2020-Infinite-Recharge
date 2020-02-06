@@ -16,50 +16,15 @@ public class FieldDimensions
 
     }
 
-    //Red is to the right (postive x)
-
 	// dimensions of field components
 	public static double kFieldLengthX = 648;       // 54'
 	public static double kFieldLengthY = 324;       // 27'
     
 
-    public static double startLineDist = 149.188;
-    public static double portY = 247.00;
-    public static double opponentTrenchBallx = 278.456;
-    public static double opponentTrenchBally = 64.705;
-    public static double allianceTrenchCloseEdgex = 234.817;
-    public static double allianceTrenchFarEdgex = 448.817;
-    public static double allianceTrenchMiddley = 313.905;
-
-    //Balls
-    public static double centerBlueSideBallx = 268.728;
-    public static double centerBlueSideBally = 165.930;
-    public static double centerBlueSideMiddleBallx = 262.39;
-    public static double centerBlueSideMiddleBally = 181.227;
-    public static double centerBlueSidePostBallx = 256.053;
-    public static double centerBlueSidePostBally = 196.524;
-    public static double centerRedSidePostBallx = 263.174;
-    public static double centerRedSidePostBally = 220.930;
-    public static double centerRedSideFarBallx = 278.473;
-    public static double centerRedSideFarBally = 227.267;
 
 
 
-    public static Vector2d portStartPos = new Vector2d(startLineDist, portY);
-    public static Vector2d opponentTrenchBallPos = new Vector2d(opponentTrenchBallx, opponentTrenchBally);
-    public static Vector2d allianceTrenchClosePos = new Vector2d(allianceTrenchCloseEdgex, allianceTrenchMiddley);
-    public static Vector2d allianceTrenchFarPos = new Vector2d(allianceTrenchFarEdgex, allianceTrenchMiddley);
-
-    //Balls
-    public static Vector2d centerBlueSideBallPos = new Vector2d(centerBlueSideBallx, centerBlueSideBally);
-    public static Vector2d centerBlueSideMiddleBallPos = new Vector2d(centerBlueSideMiddleBallx, centerBlueSideMiddleBally);
-    public static Vector2d centerBlueSidePosBallPos = new Vector2d(centerBlueSidePostBallx, centerBlueSidePostBally);
-    public static Vector2d centerRedSidePostBallPos = new Vector2d(centerRedSidePostBallx, centerRedSidePostBally);
-    public static Vector2d centerRedSideFarBallPos = new Vector2d(centerRedSideFarBallx, centerRedSideFarBally);
-
-
-
-
+    
 	private static final DataLogger logger = new DataLogger()
     {
         @Override

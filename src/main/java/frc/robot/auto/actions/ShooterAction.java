@@ -7,14 +7,13 @@ public class ShooterAction implements Action {
 
     Shooter shooter = Shooter.getInstance();
     boolean finished = false;
-    //double speed = shooter.calcBallVelocity();
 
     public ShooterAction() {}
 
     @Override
     public void start() {
         shooter.onLoop();
-       // shooter.setShooterRPM();
+        shooter.runShooter();
         finished = false;
     }
 

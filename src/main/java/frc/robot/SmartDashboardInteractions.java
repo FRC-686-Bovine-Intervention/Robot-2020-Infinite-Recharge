@@ -6,7 +6,6 @@ import frc.robot.auto.AutoModeBase;
 import frc.robot.auto.modes.MovementAuto;
 import frc.robot.auto.modes.StandStillMode;
 import frc.robot.lib.joystick.DriverControlsBase;
-import frc.robot.lib.joystick.DriverControlsReversibleThrustmaster;
 import frc.robot.lib.joystick.DriverControlsThrustmaster;
 import frc.robot.lib.joystick.DriverControlsThrustmasterRight;
 import frc.robot.lib.joystick.DriverControlsXbox;
@@ -38,9 +37,8 @@ public class SmartDashboardInteractions
     {
     	driverControlsChooser = new SendableChooser<DriverControlsOption>();
     	driverControlsChooser.addOption(DriverControlsOption.XBOX_ARCADE.name,        DriverControlsOption.XBOX_ARCADE);
-        driverControlsChooser.setDefaultOption(DriverControlsOption.THRUSTMASTER_RIGHTHANDED.name,  DriverControlsOption.THRUSTMASTER_RIGHTHANDED);
+        driverControlsChooser.setDefaultOption(DriverControlsOption.THRUSTMASTER_ARCADE.name,  DriverControlsOption.THRUSTMASTER_ARCADE);
         driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_RIGHTHANDED.name, DriverControlsOption.THRUSTMASTER_RIGHTHANDED);
-        driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_REVERSIBLE.name, DriverControlsOption.THRUSTMASTER_REVERSIBLE);
     	// driverControlsChooser.addOption(DriverControlsOption.ARCADE.name,        DriverControlsOption.ARCADE);
 		// driverControlsChooser.addOption(DriverControlsOption.TRIGGER.name,        DriverControlsOption.TRIGGER);
     	// driverControlsChooser.addOption(DriverControlsOption.TANK.name, 	      DriverControlsOption.TANK);
@@ -86,8 +84,7 @@ public class SmartDashboardInteractions
     {
         XBOX_ARCADE("Xbox  Arcade"),
         THRUSTMASTER_ARCADE("Thrustmaster  Arcade"),
-        THRUSTMASTER_RIGHTHANDED("Right Thrustmaster Arcade"),
-        THRUSTMASTER_REVERSIBLE("Thrustmaster Reversible");
+        THRUSTMASTER_RIGHTHANDED("Right Thrustmaster Arcade");
         // ARCADE("Arcade"),
         // TRIGGER("Trigger"),				// works for Xbox controller and Xbox steering wheel
         // TANK("Tank"),
@@ -100,96 +97,115 @@ public class SmartDashboardInteractions
 
     	public final String name;
     	
-        DriverControlsOption(final String name) {
+        DriverControlsOption(String name) {
     		this.name= name;
     	}
     }
-
-    public DriverControlsBase getDriverControlsSelection() {
-        DriverControlsOption selection = (DriverControlsOption) driverControlsChooser.getSelected();
-        if (selection == null) {
+   
+    public DriverControlsBase getDriverControlsSelection() 
+    {
+    	DriverControlsOption selection = (DriverControlsOption)driverControlsChooser.getSelected(); 
+        if (selection == null)
+        {
             selection = DriverControlsOption.THRUSTMASTER_ARCADE;
         }
 
-        switch (selection) {
-        case XBOX_ARCADE:
-            return new DriverControlsXbox();
+    	switch (selection)
+    	{
+		case XBOX_ARCADE:
+           return new DriverControlsXbox();
 
         case THRUSTMASTER_RIGHTHANDED:
-            return new DriverControlsThrustmasterRight();
+           return new DriverControlsThrustmasterRight();
 
         case THRUSTMASTER_ARCADE:
-            return null;
-
-        case THRUSTMASTER_REVERSIBLE:
-            return new DriverControlsReversibleThrustmaster();
-        
         default:
-            return new DriverControlsThrustmaster();
+            return new DriverControlsThrustmaster(); 
 
-        }
+
+}   
     }
+    
+    
+
+    	
 
     SendableChooser<StartDelayOption> startDelayChooser;
 
-    public enum StartDelayOption {
-        DELAY_0_SEC("0 Sec", 0.0), DELAY_1_SEC("1 Sec", 1.0), DELAY_2_SEC("2 Sec", 2.0), DELAY_3_SEC("3 Sec", 3.0),
-        DELAY_4_SEC("4 Sec", 4.0), DELAY_5_SEC("5 Sec", 5.0);
+    public enum StartDelayOption
+    {
+    	DELAY_0_SEC("0 Sec", 0.0),
+    	DELAY_1_SEC("1 Sec", 1.0),
+    	DELAY_2_SEC("2 Sec", 2.0),
+    	DELAY_3_SEC("3 Sec", 3.0),
+    	DELAY_4_SEC("4 Sec", 4.0),
+    	DELAY_5_SEC("5 Sec", 5.0);
 
-        public final String name;
-        public final double delaySec;
+    	public final String name;
+    	public final double delaySec;
 
-        StartDelayOption(final String name, final double delaySec) {
-            this.name = name;
-            this.delaySec = delaySec;
-        }
+    	StartDelayOption(String name, double delaySec) {
+    		this.name= name;
+    		this.delaySec = delaySec;
+    	}
+    }
+   
+    public double getStartDelay()
+    {
+		return startDelayChooser.getSelected().delaySec;
     }
 
-    public double getStartDelay() {
-        return startDelayChooser.getSelected().delaySec;
-    }
+
 
     SendableChooser<AutoModeOption> autoModeChooser;
 
-    enum AutoModeOption {
+    enum AutoModeOption
+    {
         MOVEMENT_AUTO("Movement Auto");
-
+    
         public final String name;
-
-        AutoModeOption(final String name) {
+    
+        AutoModeOption(String name) {
             this.name = name;
         }
     }
 
-    public AutoModeBase getAutoModeSelection() {
-        final AutoModeOption autoMode = (AutoModeOption) autoModeChooser.getSelected();
+    public AutoModeBase getAutoModeSelection()
+    {
+    	AutoModeOption autoMode = (AutoModeOption)autoModeChooser.getSelected();
 
-        switch (autoMode) {
+    	switch(autoMode)
+    	{
         case MOVEMENT_AUTO:
             return new MovementAuto();
-
-        default:
+			
+    	default:
             System.out.println("ERROR: unexpected auto mode: " + autoMode);
-            return new StandStillMode();
-        }
+			return new StandStillMode();
+    	}
     }
+
+
+
 
     SendableChooser<AutoSideSelection> autoSideChooser;
 
     public enum AutoSideSelection {
-
-        // Left Looking at the goals
-        LEFT_SIDE("Left Side"), RIGHT_SIDE("Right Side");
+    
+        //Left Looking at the goals
+        LEFT_SIDE("Left Side"),
+        RIGHT_SIDE("Right Side");
 
         public final String selection;
 
-        AutoSideSelection(final String selection) {
+        AutoSideSelection(String selection){
             this.selection = selection;
         }
     }
 
-    public AutoSideSelection getAutoSide() {
-        final AutoSideSelection selection = (AutoSideSelection) autoSideChooser.getSelected();
+
+    public AutoSideSelection getAutoSide(){
+        AutoSideSelection selection = (AutoSideSelection)autoSideChooser.getSelected();
         return selection;
     }
     

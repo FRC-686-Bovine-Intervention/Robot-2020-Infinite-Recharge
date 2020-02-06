@@ -21,7 +21,7 @@ public class Limelight
     public static final int V1 = 0;
     public static final int V2 = 1;
 
-    private static Limelight instance = new Limelight("limelight-shooter", V2);
+    private static Limelight instance = new Limelight("limelight", V1);
     public static Limelight getInstance() { return instance; }
 
     public static final double kImageHeightPixels = 240;
@@ -50,7 +50,7 @@ public class Limelight
      */
     public Limelight()
     {
-        this("limelight-shooter", V2);
+        this("limelight", V2);
     }
 
     /**
@@ -64,7 +64,6 @@ public class Limelight
 
         kCameraFocalLengthInPixels[V1] = kImageHorizCenterPixels / Math.atan(kCameraHorizFOVRad[V1]/2.0 * kFOVError[V1]);
         kCameraFocalLengthInPixels[V2] = kImageHorizCenterPixels / Math.atan(kCameraHorizFOVRad[V2]/2.0 * kFOVError[V2]);
-        setPipeline(0);
     }
 
     /**

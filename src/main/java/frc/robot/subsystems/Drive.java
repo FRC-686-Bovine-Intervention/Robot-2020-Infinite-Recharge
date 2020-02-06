@@ -3,9 +3,6 @@ package frc.robot.subsystems;
 import frc.robot.command_status.DriveCommand;
 import frc.robot.command_status.DriveCommand.DriveControlMode;
 import frc.robot.command_status.DriveState;
-import frc.robot.lib.joystick.DriverControlsBase;
-import frc.robot.lib.joystick.DriverControlsEnum;
-import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Kinematics.WheelSpeed;
 import frc.robot.lib.util.PIDController;
@@ -24,7 +21,7 @@ import frc.robot.loops.Loop;
 
 
 
-public class Drive extends Subsystem
+public class Drive extends Subsystem 
 {
 	// singleton class
 	private static Drive instance = null;
@@ -44,7 +41,6 @@ public class Drive extends Subsystem
 	
 	// velocity heading
 	private VelocityHeadingSetpoint velocityHeadingSetpoint = new VelocityHeadingSetpoint();
-
 
 
 

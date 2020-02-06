@@ -5,13 +5,17 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.command_status.DriveState;
 import frc.robot.lib.joystick.DriverAxisEnum;
+import frc.robot.lib.joystick.DriverControlsBase;
+import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
+import frc.robot.lib.sensors.NavX;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Kinematics;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
@@ -64,7 +68,10 @@ public class Shooter implements Loop {
 
 	public static double kQuadEncoderCodesPerRev = 1024;
 	public static double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
-	public static double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
+    public static double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
+    public static double kShooterGearRatio = 1.0/2.0;
+    public static double kTurretGearRatio = 20.0/1.0;
+    public static double kHoodGearRatio = 1.0/1.0;
 
     public final int kAllowableError = (int)rpmToEncoderUnitsPerFrame(10);
 
@@ -73,14 +80,53 @@ public class Shooter implements Loop {
     public final int kContinuousCurrentLimit = 30;
     public final int kSliderMax = 200;
 
-    public double kGoalHeight = 76.75;
-    public double kCameraHeight = 23;
-    public double kCameraAngle = 37;
-    public double kFrontToCameraDist = 27.5;
-
     public static double targetRPM = 0;
     public static double kRPMErrorShooting = 360.0, kRPMErrorStopping = 20.0;
- 
+
+
+    //Variables for Target Location and Shooter build =======================
+    public static double targetHeight = 18.75; //Measured in inches
+    public static double cameraHeight = 0;
+    public static double shooterWheelRadius = 3.0; //Inches
+    public static double cameraAngleDeg = 18; //From the horizontal
+    public static double cameraAngleRad = Math.toRadians(cameraAngleDeg);
+    public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
+    public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
+
+    public Vector2d targetPos;
+    public static double targetSmoothing = (1.0/10.0);
+
+    public Vector2d shooterVelocity;
+
+
+    public static double startAngleDeg = 30; //0 degrees is pointing directly at the outer port, CCW is positive
+    public double stepDeg = 2;
+    public static double searchSweepDeg = 90;
+
+    public static double maxRotationTrackingDeg = 360;
+    public static double maxRotationDeg = 720;
+    public static double maxRotationTrackingRad = Math.toRadians(maxRotationTrackingDeg);
+    public static double maxRotationRad = Math.toRadians(maxRotationDeg);
+    public static double searchingVelocityRPM = 0.5; 
+
+
+    //Shooter Operational States
+    public enum ShooterState {
+        IDLING, WAITING, SEARCHING, TRACKING, READJUSTING, SHOOTING
+    }
+    ShooterState cState = ShooterState.SEARCHING;
+    
+    //Target Tracking Variables
+    public int targetLostCount = 0; //This is used to provide a buffer before searching for the target
+    public static int maxLostCountShooting = 5;
+    public static int maxLostCountTracking = 10;
+    public Vector2d lastTargetPos = null;
+
+    public double targetAdjustRads = 0; //Used in the Readjusting state in order to return to the original absolute position
+    public static double adjustmentToleranceDeg = 10; //Allowable error when readjusting
+    public static double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
+
+
     // Distance vs. RPM & Hood Pos Table
 
     public double[][] dataTable = {
@@ -190,56 +236,123 @@ public class Shooter implements Loop {
     //Loop Functions
     @Override
     public void onStart() {
-        stop();
-        zeroSensors();
+        //stop();
+        //zeroSensors();
     }
 
     @Override
     public void onLoop() {
-        // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
- 
-        // GoalEnum goal = GoalEnum.HIGH_GOAL;
-        // if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
-        // {
-        //     goal = GoalEnum.LOW_GOAL;
-        //     Limelight.getInstance().setPipeline(1);
-        // } else {
-        //     Limelight.getInstance().setPipeline(0);
-        // }
+        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
+            //Order of loop: 
+            //First part: determining appropriate state:
+            //  Check for target - determine if it has been lost - handle user input - determine if the turret is spun too far
+            //Second part: react according to determined state
+            //  Switch statement contains code necessary to each state 
 
+            //Checking the target status and determining its relative displacement:
+            Vector2d targetDisplacement;
+            if(camera.getIsTargetFound()){
+                targetLostCount = 0;
+                targetDisplacement = getTargetDisplacement();
+                cState = ShooterState.TRACKING; //Jump to the tracking status in order to keep it in view
+            } else if(cState == ShooterState.READJUSTING){
+                //Don't add to the counter, give the turret time to readjust
+                targetDisplacement = lastTargetPos; 
+            } else {
+                targetLostCount++;
+                targetDisplacement = lastTargetPos;
+            }
+            lastTargetPos = targetDisplacement;
 
+            //Determining if a the state should be swapped to handle target loss:
+            if(targetLostCount >= maxLostCountTracking){
+                cState = ShooterState.SEARCHING; //Begin actively looking for the target
+            } else if(targetLostCount >= maxLostCountShooting) {
+                cState = ShooterState.WAITING; //Stop shooting and wait to see if target comes back
+            }
 
-        if(SmartDashboard.getBoolean("Shooter/Debug", false)){
+            //Taking in user input and adjusting state accordingly
+            DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
+            if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && cState == ShooterState.TRACKING){
+                cState = ShooterState.SHOOTING;
+            }
+
+            //Checking turret rotation to ensure wires don't get wrapped up:
+            if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
+                cState = ShooterState.READJUSTING;
+                targetAdjustRads = getTurretAbsoluteAngleRad();
+            }
+            
+
+            //Reacting based on the determined cState:
+            switch(cState){
+                case IDLING:
+                    //Hold everything in place
+                    setShooterRPM(0);
+                    setTurretDeg(0);
+                    setHoodDeg(0);
+                    break;
+
+                case WAITING:
+                    //Nothing really occurs in this state and usually doesn't last long
+                    //This is used as a back up while shooting if the target is temporarily lost
+                    break;
+
+                case SEARCHING:
+                    //Look around
+                    setShooterRPM(0);
+                    setHoodDeg(0);
+                    
+                    double nextPos = Math.toDegrees(getTurretAbsoluteAngleRad()) + stepDeg;
+                    double robotHeading = NavX.getInstance().getHeadingDeg()+startAngleDeg;
+                    double turretHeading = nextPos + (Math.PI/2.0);
+                    
+                    if(turretHeading > robotHeading+(searchSweepDeg/2.0) || turretHeading < robotHeading-(searchSweepDeg/2.0)){
+                        stepDeg *= -1.0; //reverse direction
+                    }
+
+                    setTurretDeg(nextPos);
+                    break;
+
+                case TRACKING:
+                    setShooterRPM(0);
+                    setHoodDeg(0);
+                    setTurretDeg(targetDisplacement.angle()-(Math.PI/2.0)); //pi/2 subtracted to account for turret 0 is forward while target 0 is to the left
+                    break;
+
+                case READJUSTING:
+                    setTurretDeg(Math.toDegrees(targetAdjustRads));
+                    if(Math.abs(getTurretAngleRad()-targetAdjustRads) <= adjustmentToleranceRad){
+                        cState = ShooterState.WAITING; //Send the shooter into waiting to see if target is detected
+                    }
+                    break;    
+
+                case SHOOTING:
+                    Vector2d ballVelocity = calcBallVelocity(targetDisplacement); //This is the target velocity of the ball immediately after leaving the robot
+                    double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
+                    
+                    double hoodDeg = calcHoodPosition(targetDisplacement.length());
+                    double turretDeg = Math.toDegrees(ballVelocity.angle());
+
+                    //Controlling subsystems:
+                    setShooterRPM(shooterRPM);
+                    setHoodDeg(hoodDeg);
+                    setTurretDeg(turretDeg);
+                    break;
+
+                default:
+                    break;
+            }
+        } else {
             setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
+            setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
             SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
         }
-
-        // if (!SmartDashboard.getBoolean("Shooter/Debug", false))
-        // {
-        //     if (driverControls.getBoolean(DriverControlsEnum.SHOOT))
-        //     {
-        //         setTarget(goal);
-        //     }
-        //     else
-        //     {
-        //         stop();
-        //     }
-        // }
-        // else
-        // {
-        //     setSpeed(SmartDashboard.getNumber("Shooter/RPM", 0));
-        //     double distance = handleDistance(camera.getTargetVerticalAngleRad(), goal)-kFrontToCameraDist;
-        //     if (camera.getIsTargetFound())
-        //     {  
-        //         SmartDashboard.putNumber("Shooter/Distance", distance);
-        //     }
-        // }
-        // SmartDashboard.putBoolean("Shooter/Found Target", camera.getIsTargetFound());
     }
 
     @Override
     public void onStop() {
-        stop();
+        //stop();
     }
 
     public void stop()
@@ -251,25 +364,13 @@ public class Shooter implements Loop {
         hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
         turretMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
     }
-    
-
-
-    // Talon SRX reports position in rotations while in closed-loop Position mode
-	public static double encoderUnitsToRevolutions(int _encoderPosition) {	return (double)_encoderPosition / (double)kQuadEncoderUnitsPerRev; }
-    public static int revolutionsToEncoderUnits(double _rev) { return (int)(_rev * kQuadEncoderUnitsPerRev); }
-    public static int degreesToEncoderUnits(double _deg) {return (int)((_deg/360.0)*kQuadEncoderCodesPerRev);}
-
-	// Talon SRX reports speed in RPM while in closed-loop Speed mode
-	public static double encoderUnitsPerFrameToRPM(int _encoderEdgesPerFrame) { return encoderUnitsToRevolutions(_encoderEdgesPerFrame) * 60.0 / kQuadEncoderStatusFramePeriod; }
-	public static int rpmToEncoderUnitsPerFrame(double _rpm) { return (int)(revolutionsToEncoderUnits(_rpm) / 60.0 * kQuadEncoderStatusFramePeriod); }
-
 
 
 
     public void setShooterRPM(double rpm)
     {
         targetRPM = rpm;
-        double encoderSpeed = rpmToEncoderUnitsPerFrame(targetRPM);
+        double encoderSpeed = shooterRPMToEncoderUnitsPerFrame(targetRPM);
         shooterMotor.set(ControlMode.Velocity, encoderSpeed);
         SmartDashboard.putNumber("Shooter/TargetRPM", targetRPM);
         SmartDashboard.putNumber("Shooter/EncoderSpeed", encoderSpeed);
@@ -277,20 +378,37 @@ public class Shooter implements Loop {
 
     public void setHoodDeg(double degree){
         //Relies on hood to be initialized properly
-        double encoderTicks = degreesToEncoderUnits(degree);
-        hoodMotor.set(ControlMode.Position, encoderTicks);
+        double encoderUnits = hoodDegreesToEncoderUnits(degree);
+        hoodMotor.set(ControlMode.Position, encoderUnits);
     }
 
     public void setTurretDeg(double degrees){
-        double encoderUnits = degreesToEncoderUnits(degrees);
-        hoodMotor.set(ControlMode.Position, encoderUnits);
+        //Relies on proper intialization of turret, facing forwards
+        double radians = Math.toRadians(degrees);
+        double cAbsAngle = getTurretAbsoluteAngleRad();
+        double cAngle = getTurretAngleRad();
+        double targetAngle;
+
+        if(cAbsAngle < 0){
+            cAbsAngle += Math.PI*2.0;
+        }
+        double CWDist = radians-cAbsAngle;
+        double CCWDist = radians-cAbsAngle + (Math.PI*2);
+        if(Math.abs(CWDist) < Math.abs(CCWDist)){
+            targetAngle = cAngle + CWDist;
+        } else {
+            targetAngle = cAngle + CCWDist;
+        }
+
+        double encoderUnits = turretDegreesToEncoderUnits(Math.toDegrees(targetAngle));
+        turretMotor.set(ControlMode.MotionMagic, encoderUnits);
     }
 
     
 
     public double getSpeedError()
     {
-        double sensorRPM = encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity());
+        double sensorRPM = encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity())*(1.0/kShooterGearRatio);
         double errorRPM = sensorRPM - targetRPM;
 
         SmartDashboard.putNumber("Shooter/SensorRPM", sensorRPM);
@@ -308,97 +426,22 @@ public class Shooter implements Loop {
         }
     }
 
-    public void setShooter()
-    {
-        SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
 
 
-        double distance = getDistFromTarget(camera.getTargetVerticalAngleRad())-kFrontToCameraDist;
-        int keyL = getLinear(distance, dataTable);
-        double shooterCorrection = -driverControls.getAxis(DriverAxisEnum.SHOOTER_SPEED_CORRECTION)*kSliderMax;
-        double nominalSpeed = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
-        speed = nominalSpeed + shooterCorrection;
-        double hoodPosition = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][2], dataTable[keyL+1][2]);
-        
-        setHoodDeg(hoodPosition);
-        setShooterRPM(speed);
-    }
+    //=======================================================
+    //Primary Functions for Shooting Calculations
+    //=======================================================
 
 
-
-
-
-    public double getDistFromTarget(double angleRad){
-        return (kGoalHeight-kCameraHeight)/(Math.tan(angleRad+(kCameraAngle * Vector2d.degreesToRadians)));
-    }
-
-    public int getLinear (double d, double table[][])
-    {
-        double distance = Math.max(Math.min(d, table[table.length-1][0]), table[0][0]);
-        int k;
-        for (k=0;k<table.length;k++)
-        {
-            if (distance <= table[k][0])
-            {
-                break;
-            }
-        }
-        return Math.max(k-1, 0);
-    }
-
-    public double handleLinear (double d, double dL, double dH, double sL, double sH)
-    {
-        return (sH-sL)*Math.min((d-dL)/(dH-dL),1)+sL;
-    }
-
-
-
-
-
-
-
-
-
-
-
-    //Cool Shooter Stuff by Roame=======================================
-
-    public static double targetHeight = 72.5; //Measured in inches
-    public static double shooterWheelRadius = 3.0; //Inches
-    public static double cameraAngle = 45;
-    public static double cameraAngleRad = Math.toRadians(cameraAngle);
-    public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
-    public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
-    
-    public Vector2d targetPos;
-    public static double targetSmoothing = (1.0/20.0);
-
-    public static Vector2d shooterVelocity;
-
-
-    public void runShooter(){
-        Vector2d ballVelocity = calcBallVelocity(); //This is the target velocity of the ball immediately after leaving the robot
-        double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
-        double hoodDeg = calcHoodPosition();
-        double turretDeg = Math.toDegrees(ballVelocity.angle());
-
-        //Controlling subsystems:
-        setShooterRPM(shooterRPM);
-        setHoodDeg(hoodDeg);
-        setTurretDeg(turretDeg);
-    }
-
-    public double calcHoodPosition(){
+    public double calcHoodPosition(double targetDistance){
         //Returns hood position in degrees
-        double distance = getTargetDisplacement().length();
-        int keyL = getLinear(distance, dataTable);
-        double hoodPosition = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][2], dataTable[keyL+1][2]);
+        int keyL = getLinear(targetDistance, dataTable);
+        double hoodPosition = handleLinear(targetDistance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][2], dataTable[keyL+1][2]);
         return hoodPosition;
     }
 
 
-    public Vector2d calcBallVelocity(){
-        Vector2d targetDisplacement = getTargetDisplacement();
+    public Vector2d calcBallVelocity(Vector2d targetDisplacement){
         double targetVelocityMag = getTargetBallVelMag(targetDisplacement.length());
         Vector2d targetVelocity = new Vector2d(targetVelocityMag, 0); //Used to maintain magnitude
         targetVelocity.rotate(targetDisplacement.angle()); //Rotating it back to the correct rotation 
@@ -412,9 +455,12 @@ public class Shooter implements Loop {
 
 
     public Vector2d getTargetDisplacement(){
-        double targetY = targetHeight/Math.tan(camera.getTargetVerticalAngleRad());
-        double targetX = targetY*Math.tan(camera.getTargetHorizontalAngleRad());
+        double targetY = (targetHeight-cameraHeight)/Math.tan(camera.getTargetVerticalAngleRad()+cameraAngleRad);
+        double targetX = -targetY*Math.tan(camera.getTargetHorizontalAngleRad()); //Negative is to ensure that left of camera is positive from top-view
         Vector2d detectedTargetPos = new Vector2d(targetX, targetY);
+        SmartDashboard.putNumber("Shooter/Targetx", targetX);
+        SmartDashboard.putNumber("Shooter/Targety", targetY);
+        SmartDashboard.putNumber("Shooter/TargetDist", detectedTargetPos.length());
         detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
         detectedTargetPos = detectedTargetPos.rotate(getTurretAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
@@ -457,19 +503,84 @@ public class Shooter implements Loop {
         return (0.5*speed*shooterWheelRadius); //Determine the balls' velocity
     }
 
+    public double getTurretAngleRad(){
+        //Turret should be zeroed when facing front of robot
+        return ((double)turretMotor.getSelectedSensorPosition()/(double)kQuadEncoderCodesPerRev)*(2.0*Math.PI)*(1.0/kTurretGearRatio);
+    }
+
+    public double getTurretAbsoluteAngleRad(){
+        //Returns angle within pi to -pi. Positive is CCW
+        double radians = getTurretAngleRad();
+        double adjustedRad = Math.abs(radians % (2.0*Math.PI));
+        adjustedRad = adjustedRad < Math.PI ? adjustedRad : adjustedRad-(2.0*Math.PI);
+        return adjustedRad;
+    }
+
+    public boolean checkTurretOutOfBounds(ShooterState state){
+        switch(state){
+            case SEARCHING:
+            case TRACKING:
+                return (Math.abs(getTurretAngleRad()) > maxRotationTrackingRad);
+
+            case SHOOTING:
+                return (Math.abs(getTurretAngleRad())> maxRotationRad);
+
+            default:
+                return true;
+        }
+    }
+
+
 
     public double lawOfCosines(double _leg1, double _leg2, double angleRad){
         //Very original function
         return Math.sqrt(Math.pow(_leg1, 2) + Math.pow(_leg2, 2) - 2*_leg1*_leg2*Math.cos(angleRad));
     }
+    
+    public int getLinear (double d, double table[][])
+    {
+        double distance = Math.max(Math.min(d, table[table.length-1][0]), table[0][0]);
+        int k;
+        for (k=0;k<table.length;k++)
+        {
+            if (distance <= table[k][0])
+            {
+                break;
+            }
+        }
+        return Math.max(k-1, 0);
+    }
 
-    public double getTurretAngleRad(){
-        //The turret should be zeroed when facing the front of the robot and should return a positive feedback when rotated CCW
-        return (turretMotor.getSelectedSensorPosition()/kQuadEncoderUnitsPerRev)*2*Math.PI;
+    public double handleLinear (double d, double dL, double dH, double sL, double sH)
+    {
+        return (sH-sL)*Math.min((d-dL)/(dH-dL),1)+sL;
     }
 
 
+    //Shooter conversions:
+    public static int shooterRPMToEncoderUnitsPerFrame(double _rpm){
+        return rpmToEncoderUnitsPerFrame(_rpm*kShooterGearRatio);
+    }
 
+    // Turret conversions:
+    public static int turretDegreesToEncoderUnits(double _degrees){
+        return degreesToEncoderUnits(_degrees*kTurretGearRatio);
+    }
+
+    //Hood conversions:
+    public static int hoodDegreesToEncoderUnits(double _degrees){
+        return degreesToEncoderUnits(_degrees*kHoodGearRatio);
+    }
+
+
+    // Talon SRX reports position in rotations while in closed-loop Position mode
+	public static double encoderUnitsToRevolutions(int _encoderPosition) {	return (double)_encoderPosition / (double)kQuadEncoderUnitsPerRev; }
+    public static int revolutionsToEncoderUnits(double _rev) { return (int)(_rev * kQuadEncoderUnitsPerRev); }
+    public static int degreesToEncoderUnits(double _deg) {return (int)((_deg/360.0)*kQuadEncoderCodesPerRev);}
+
+	// Talon SRX reports speed in RPM while in closed-loop Speed mode
+	public static double encoderUnitsPerFrameToRPM(int _encoderEdgesPerFrame) { return encoderUnitsToRevolutions(_encoderEdgesPerFrame) * 60.0 / kQuadEncoderStatusFramePeriod; }
+	public static int rpmToEncoderUnitsPerFrame(double _rpm) { return (int)(revolutionsToEncoderUnits(_rpm) / 60.0 * kQuadEncoderStatusFramePeriod); }
 
 
 

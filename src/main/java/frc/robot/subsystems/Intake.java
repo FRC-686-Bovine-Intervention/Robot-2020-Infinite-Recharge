@@ -52,7 +52,6 @@ public class Intake extends Subsystem implements Loop
         intakeMotor = new VictorSPX(Constants.kIntakeTalonId);
         intakeMotor.configFactoryDefault();
         intakeMotor.setInverted(true);
-
         mainSolenoid = new Solenoid(Constants.kPCMID, Constants.kMainSolenoidChannel);
         secondarySolenoid = new Solenoid(Constants.kPCMID, Constants.kSecondarySolenoidChannel);
     }
@@ -122,14 +121,14 @@ public class Intake extends Subsystem implements Loop
         currentState = IntakeState.GROUND;
         setPower(+Constants.kIntakeVoltage);
         mainSolenoid.set(true);
-        secondarySolenoid.set(false);
+        secondarySolenoid.set(true);
     }
 
     public void extendToPlayerStation(){
-        currentState = IntakeState.GROUND;
+        currentState = IntakeState.PLAYER_STATION;
         setPower(+Constants.kIntakeVoltage);
         mainSolenoid.set(true);
-        secondarySolenoid.set(true);
+        secondarySolenoid.set(false);
     }
 
     public void retract(){

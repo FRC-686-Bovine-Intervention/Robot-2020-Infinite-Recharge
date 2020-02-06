@@ -46,7 +46,7 @@ public class DriverControlsThrustmasterRight extends DriverControlsBase
         steeringControls = new TmArcadeDriveSteering(controller, new DeadbandNonLinearity(throttleDeadband, turnDeadband, throttleNonLinearity, turnNonLinearity));
     }
 
-    public DriveCommand getDriveCommand() 
+    public DriveCommand getDriveCommand()
     {
         return steeringControls.getDriveCommand(); 
     }

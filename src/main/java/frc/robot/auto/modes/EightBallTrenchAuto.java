@@ -17,6 +17,7 @@ public class EightBallTrenchAuto extends AutoModeBase {
     @Override
     protected void routine() throws AutoModeEndedException 
     {
+        /*
         boolean doneShooting = true;
 
         backupToTrenchPath = new Path();     //lineup using limelight feed
@@ -44,6 +45,7 @@ public class EightBallTrenchAuto extends AutoModeBase {
         //lineup turret action
         runAction(new TurretAction);
         //run action - shoot   
-        runAction(new ShootAction); 		         
+        runAction(new ShootAction); 
+        */		         
     }
 }

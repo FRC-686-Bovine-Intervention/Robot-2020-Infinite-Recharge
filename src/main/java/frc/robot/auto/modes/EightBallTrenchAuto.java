@@ -2,7 +2,8 @@ package frc.robot.auto.modes;
 
 import frc.robot.auto.AutoModeBase;
 import frc.robot.auto.AutoModeEndedException;
-import frc.robot.auto.actions.WaitAction;
+import frc.robot.lib.util.Path;
+import frc.robot.lib.util.Path.Waypoint;
 
 /**
  * Just drive in a straight line, using VelocityHeading mode
@@ -17,10 +18,10 @@ public class EightBallTrenchAuto extends AutoModeBase {
     @Override
     protected void routine() throws AutoModeEndedException 
     {
-        /*
+        
         boolean doneShooting = true;
 
-        backupToTrenchPath = new Path();     //lineup using limelight feed
+        Path backupToTrenchPath = new Path();     //lineup using limelight feed
         backupToTrenchPath.add(new Waypoint());//start line
         backupToTrenchPath.add(new Waypoint());//turn position
         backupToTrenchPath.add(new Waypoint());//turn on limelights
@@ -46,6 +47,6 @@ public class EightBallTrenchAuto extends AutoModeBase {
         runAction(new TurretAction);
         //run action - shoot   
         runAction(new ShootAction); 
-        */		         
+                 
     }
 }

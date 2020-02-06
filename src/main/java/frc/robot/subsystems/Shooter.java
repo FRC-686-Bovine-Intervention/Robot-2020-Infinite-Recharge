@@ -455,25 +455,29 @@ public class Shooter implements Loop {
 
 
     public Vector2d getTargetDisplacement(){
-        double targetY = (targetHeight-cameraHeight)/Math.tan(camera.getTargetVerticalAngleRad()+cameraAngleRad);
-        double targetX = -targetY*Math.tan(camera.getTargetHorizontalAngleRad()); //Negative is to ensure that left of camera is positive from top-view
-        Vector2d detectedTargetPos = new Vector2d(targetX, targetY);
-        SmartDashboard.putNumber("Shooter/Targetx", targetX);
-        SmartDashboard.putNumber("Shooter/Targety", targetY);
-        SmartDashboard.putNumber("Shooter/TargetDist", detectedTargetPos.length());
-        detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
-        detectedTargetPos = detectedTargetPos.rotate(getTurretAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
+        if(camera.getIsTargetFound()){
+            double targetY = (targetHeight-cameraHeight)/Math.tan(camera.getTargetVerticalAngleRad()+cameraAngleRad);
+            double targetX = -targetY*Math.tan(camera.getTargetHorizontalAngleRad()); //Negative is to ensure that left of camera is positive from top-view
+            Vector2d detectedTargetPos = new Vector2d(targetX, targetY);
+            SmartDashboard.putNumber("Shooter/Targetx", targetX);
+            SmartDashboard.putNumber("Shooter/Targety", targetY);
+            SmartDashboard.putNumber("Shooter/TargetDist", detectedTargetPos.length());
+            detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
+            detectedTargetPos = detectedTargetPos.rotate(getTurretAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
-        //Averaging:
-        if(targetPos == null){
-            //First time through
-            targetPos = detectedTargetPos;
+            //Averaging:
+            if(targetPos == null){
+                //First time through
+                targetPos = detectedTargetPos;
+            } else {
+                //Otherwise just keep averaging the position
+                targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing); //Must update targetPos for next pass through the program
+            }
+
+            return targetPos;
         } else {
-            //Otherwise just keep averaging the position
-            targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing); //Must update targetPos for next pass through the program
+            return null; //In the event that the target can not be found
         }
-
-        return targetPos;
     }
 
     public Vector2d getShooterVelocity(){
@@ -501,6 +505,11 @@ public class Shooter implements Loop {
         double nominalSpeed = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
         speed = nominalSpeed + shooterCorrection;
         return (0.5*speed*shooterWheelRadius); //Determine the balls' velocity
+    }
+
+    public double getTargetShooterVelocity(double distance){
+        //This is more useful for autonomous
+        return (getTargetBallVelMag(distance)/(0.5*shooterWheelRadius));
     }
 
     public double getTurretAngleRad(){

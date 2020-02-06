@@ -8,10 +8,12 @@ import com.revrobotics.ColorMatch;
 import com.revrobotics.ColorMatchResult;
 import com.revrobotics.ColorSensorV3;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.Constants;
+import frc.robot.lib.sensors.UltrasonicSensor;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.loops.Loop;
 
@@ -30,8 +32,11 @@ public class ControlPanel implements Loop {
     // Members
     //====================================================
     public TalonSRX panelMaster;
+    public TalonSRX sliderMotor;
     public ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
     public ColorMatch colorMatch = new ColorMatch();
+    public UltrasonicSensor ultrasonic;
+    public DigitalInput leftTouchSensor, rightTouchSensor;
 
     public double speed;
 
@@ -44,10 +49,15 @@ public class ControlPanel implements Loop {
     public final double kCalMaxEncoderPulsePer100ms = 33300;	// velocity at a max throttle (measured using Phoenix Tuner)
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
-	public final double kKf = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-	public final double kKp = 0.03;	   
-	public final double kKd = 2.0625;	// to resolve any overshoot, start at 10*Kp 
-	public final double kKi = 0.0;    
+	public final double kKfMaster = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+	public final double kKpMaster = 0.03;	   
+	public final double kKdMaster = 2.0625;	// to resolve any overshoot, start at 10*Kp 
+    public final double kKiMaster = 0.0;    
+
+    public final double kKfSlider = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+	public final double kKpSlider = 0.03;	   
+	public final double kKdSlider = 2.0625;	// to resolve any overshoot, start at 10*Kp 
+	public final double kKiSlider = 0.0;  
 
 	public static double kQuadEncoderCodesPerRev = 1024;
 	public static double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
@@ -84,6 +94,7 @@ public class ControlPanel implements Loop {
     public ControlPanel() 
     {
         panelMaster = new TalonSRX(Constants.kPanelMasterId);
+        sliderMotor = new TalonSRX(Constants.kSliderMotorId);
 
         //====================================================
         // Configure Deploy Motors
@@ -106,10 +117,10 @@ public class ControlPanel implements Loop {
 		
 		// configure velocity loop PID 
         panelMaster.selectProfileSlot(kSlotIdx, Constants.kTalonPidIdx); 
-        panelMaster.config_kF(kSlotIdx, kKf, Constants.kTalonTimeoutMs); 
-        panelMaster.config_kP(kSlotIdx, kKp, Constants.kTalonTimeoutMs); 
-        panelMaster.config_kI(kSlotIdx, kKi, Constants.kTalonTimeoutMs); 
-        panelMaster.config_kD(kSlotIdx, kKd, Constants.kTalonTimeoutMs);
+        panelMaster.config_kF(kSlotIdx, kKfMaster, Constants.kTalonTimeoutMs); 
+        panelMaster.config_kP(kSlotIdx, kKpMaster, Constants.kTalonTimeoutMs); 
+        panelMaster.config_kI(kSlotIdx, kKiMaster, Constants.kTalonTimeoutMs); 
+        panelMaster.config_kD(kSlotIdx, kKdMaster, Constants.kTalonTimeoutMs);
         panelMaster.configAllowableClosedloopError(kSlotIdx, kAllowableError, Constants.kTalonTimeoutMs);
         
         // current limits
@@ -117,6 +128,41 @@ public class ControlPanel implements Loop {
         panelMaster.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
         panelMaster.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
         panelMaster.enableCurrentLimit(true);
+
+
+        //Slider Motor set up
+        sliderMotor.configFactoryDefault();
+
+		// configure encoder
+		sliderMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		sliderMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+        sliderMotor.setInverted(true);   // set to have green LEDs when driving forward
+        sliderMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		
+		// set relevant frame periods to be at least as fast as periodic rate
+		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		
+		// configure velocity loop PID 
+        sliderMotor.selectProfileSlot(kSlotIdx, Constants.kTalonPidIdx); 
+        sliderMotor.config_kF(kSlotIdx, kKfSlider, Constants.kTalonTimeoutMs); 
+        sliderMotor.config_kP(kSlotIdx, kKpSlider, Constants.kTalonTimeoutMs); 
+        sliderMotor.config_kI(kSlotIdx, kKiSlider, Constants.kTalonTimeoutMs); 
+        sliderMotor.config_kD(kSlotIdx, kKdSlider, Constants.kTalonTimeoutMs);
+        sliderMotor.configAllowableClosedloopError(kSlotIdx, kAllowableError, Constants.kTalonTimeoutMs);
+        
+        // current limits
+        sliderMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        sliderMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        sliderMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        sliderMotor.enableCurrentLimit(true);
+
+
+        ultrasonic = new UltrasonicSensor(Constants.kPanelUltrasonicChannel);
+        leftTouchSensor = new DigitalInput(Constants.kPanelLeftTouchChannel);
+        rightTouchSensor = new DigitalInput(Constants.kPanelRightTouchChannel);
     }
 
 
@@ -185,6 +231,9 @@ public class ControlPanel implements Loop {
         SmartDashboard.putString("ControlPanel/DetectedColor",  detectedColorEnum.name());
         SmartDashboard.putString("ControlPanel/ConvertedColor", convertColor(detectedColorEnum).name());
         if(!SmartDashboard.getBoolean("ControlPanel/Debug", false)){
+            if(checkTouchSensors()){
+                
+            }
             /*
             When sensors activate
             align sensor
@@ -249,6 +298,12 @@ public class ControlPanel implements Loop {
     {
         setSpeed(0);
     }
+
+
+    private boolean checkTouchSensors(){
+        return rightTouchSensor.get() && leftTouchSensor.get();
+    }
+
 
 	private final DataLogger logger = new DataLogger()
 	{

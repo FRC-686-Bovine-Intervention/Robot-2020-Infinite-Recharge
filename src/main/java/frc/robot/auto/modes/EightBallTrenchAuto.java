@@ -28,7 +28,7 @@ public class EightBallTrenchAuto extends AutoModeBase {
         //may need to be reversed 
 
         //new path drive forward path while intaking and lineup to shoot using limelights
-        intakeTrenchPath = new Path();
+        Path intakeTrenchPath = new Path();
         intakeTrenchPath.add(new Waypoint());//turn on limelights end point
         intakeTrenchPath.add(new Waypoint()); //a foot away from last ball intaked
         //May need to be reversed

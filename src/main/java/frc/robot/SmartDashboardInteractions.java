@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeBase;
+import frc.robot.auto.modes.FieldDimensions;
 import frc.robot.auto.modes.MovementAuto;
 import frc.robot.auto.modes.StandStillMode;
 import frc.robot.lib.joystick.DriverControlsBase;
@@ -10,6 +11,7 @@ import frc.robot.lib.joystick.DriverControlsReversibleThrustmaster;
 import frc.robot.lib.joystick.DriverControlsThrustmaster;
 import frc.robot.lib.joystick.DriverControlsThrustmasterRight;
 import frc.robot.lib.joystick.DriverControlsXbox;
+import frc.robot.lib.util.Pose;
 
 /**
  * Controls the interactive elements of SmartDashboard.
@@ -69,11 +71,21 @@ public class SmartDashboardInteractions
         autoModeChooser.addOption(AutoModeOption.MOVEMENT_AUTO.toString(), AutoModeOption.MOVEMENT_AUTO);
         SmartDashboard.putData("Auto Selection", autoModeChooser);
 
-        autoSideChooser = new SendableChooser<AutoSideSelection>();
-        autoSideChooser.setDefaultOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
-        autoSideChooser.addOption(AutoSideSelection.RIGHT_SIDE.toString(), AutoSideSelection.RIGHT_SIDE);
-        autoSideChooser.addOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
-        SmartDashboard.putData("Side Selection", autoSideChooser);
+        // autoSideChooser = new SendableChooser<AutoSideSelection>();
+        // autoSideChooser.setDefaultOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
+        // autoSideChooser.addOption(AutoSideSelection.RIGHT_SIDE.toString(), AutoSideSelection.RIGHT_SIDE);
+        // autoSideChooser.addOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
+        // SmartDashboard.putData("Side Selection", autoSideChooser);
+
+        //Choosing start position
+        startPoseChooser = new SendableChooser<StartPoseSelection>();
+        startPoseChooser.addOption(StartPoseSelection.PORT_START.name, StartPoseSelection.PORT_START);
+        startPoseChooser.addOption(StartPoseSelection.MIDDLE_START.name, StartPoseSelection.MIDDLE_START);
+        startPoseChooser.addOption(StartPoseSelection.PLAYER_STATION.name, StartPoseSelection.PLAYER_STATION);
+        startPoseChooser.setDefaultOption(StartPoseSelection.PORT_START.name, StartPoseSelection.PORT_START);
+        SmartDashboard.putData("Start Pose Selection", startPoseChooser);
+
+
         
     }
 
@@ -174,25 +186,46 @@ public class SmartDashboardInteractions
         }
     }
 
-    SendableChooser<AutoSideSelection> autoSideChooser;
+    // SendableChooser<AutoSideSelection> autoSideChooser;
 
-    public enum AutoSideSelection {
+    // public enum AutoSideSelection {
 
-        // Left Looking at the goals
-        LEFT_SIDE("Left Side"), RIGHT_SIDE("Right Side");
+    //     // Left Looking at the goals
+    //     LEFT_SIDE("Left Side"), RIGHT_SIDE("Right Side");
 
-        public final String selection;
+    //     public final String selection;
 
-        AutoSideSelection(final String selection) {
-            this.selection = selection;
+    //     AutoSideSelection(final String selection) {
+    //         this.selection = selection;
+    //     }
+    // }
+
+    // public AutoSideSelection getAutoSide() {
+    //     final AutoSideSelection selection = (AutoSideSelection) autoSideChooser.getSelected();
+    //     return selection;
+    // }
+    
+
+
+    SendableChooser<StartPoseSelection> startPoseChooser;
+    public enum StartPoseSelection {
+        PORT_START("Port Position", FieldDimensions.portStartPose),
+        MIDDLE_START("Middle Position", FieldDimensions.middleStartPose),
+        PLAYER_STATION("Player Station", FieldDimensions.playerStationStartPose);
+
+
+        public final String name;
+        public final Pose pose;
+
+        StartPoseSelection(final String name, final Pose pose){
+            this.name = name;
+            this.pose = pose;
         }
     }
 
-    public AutoSideSelection getAutoSide() {
-        final AutoSideSelection selection = (AutoSideSelection) autoSideChooser.getSelected();
-        return selection;
+    public Pose getSelectedStartPose(){
+        return startPoseChooser.getSelected().pose;
     }
-    
 }
    
 

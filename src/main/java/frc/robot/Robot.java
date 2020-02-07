@@ -13,7 +13,7 @@ import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Pose;
 import frc.robot.loops.DriveLoop;
 import frc.robot.loops.LoopController;
-import frc.robot.subsystems.Conveyor;
+import frc.robot.subsystems.ConveyorBelt;
 import frc.robot.subsystems.Drive;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Lift;

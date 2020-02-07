@@ -7,6 +7,7 @@ import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+import edu.wpi.first.wpilibj.PIDBase.Tolerance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
@@ -17,17 +18,17 @@ import frc.robot.Constants;
 
 
 
-public class Conveyor implements Loop
+public class ConveyorBelt implements Loop
 {
     public TalonSRX conveyorMaster;
     public VictorSPX conveyorSlave;
 
 	// singleton class
-    private static Conveyor instance = null;
-    public static Conveyor getInstance() 
+    private static ConveyorBelt instance = null;
+    public static ConveyorBelt getInstance() 
 	{ 
 		if (instance == null) {
-            instance = new Conveyor();
+            instance = new ConveyorBelt();
 		}
 		return instance;
     }
@@ -72,8 +73,11 @@ public class Conveyor implements Loop
     public static final int kContinuousCurrentLimit = 20;
 
     public boolean shooterChecked = false;
+    public static double degreesPerBall = 360;
+    public double targetPosDeg = 0;
+    public double posToleranceDeg = 10;
 
-    public Conveyor() 
+    public ConveyorBelt() 
     {
         conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
         conveyorSlave = new VictorSPX(Constants.kConveyorbeltSlaveID);
@@ -158,6 +162,24 @@ public class Conveyor implements Loop
 
     public void setSpeed(double rpm){
         conveyorMaster.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrame(rpm));
+    }
+
+    public void setPosition(double deg){
+        conveyorMaster.set(ControlMode.Position, degreesToEncoderUnits(deg));
+    }
+
+    public void feed(int numberOfBalls){
+        targetPosDeg = getConveyorAngleDeg() + (degreesPerBall*(double)numberOfBalls);
+        setPosition(targetPosDeg);
+    }
+
+
+    public boolean nearTarget(){
+        return (Math.abs(targetPosDeg-getConveyorAngleDeg())<=posToleranceDeg);
+    }
+
+    public double getConveyorAngleDeg(){
+        return encoderUnitsToDegrees(conveyorMaster.getSelectedSensorPosition());
     }
 
 

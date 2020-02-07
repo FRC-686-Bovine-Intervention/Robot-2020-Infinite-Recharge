@@ -57,6 +57,7 @@ public class Constants extends ConstantsBase {
 
 
     public static double kIntakeVoltage = 0.5;
+    public static double kConveyorRPM = 30.0;
 
 
 

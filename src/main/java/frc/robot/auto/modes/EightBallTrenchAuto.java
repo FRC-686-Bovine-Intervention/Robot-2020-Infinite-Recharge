@@ -1,16 +1,11 @@
 package frc.robot.auto.modes;
 
-import frc.robot.auto.AutoModeBase;
-import frc.robot.auto.AutoModeEndedException;
-import frc.robot.auto.actions.FeedBallsAction;
-import frc.robot.auto.actions.IntakeAction;
-import frc.robot.auto.actions.IntakeStopAction;
-import frc.robot.auto.actions.PathFollowerAction;
-import frc.robot.auto.actions.SpeedUpShooterAction;
-import frc.robot.auto.actions.WaitAction;
-import frc.robot.auto.actions.setTurretAction;
-import frc.robot.lib.util.Path;
+import frc.robot.auto.*;
+import frc.robot.auto.actions.*;
+import frc.robot.lib.util.*;
+import frc.robot.lib.util.Path.*;
 import frc.robot.lib.util.Path.Waypoint;
+import frc.robot.auto.modes.*;
 
 /**
  * Just drive in a straight line, using VelocityHeading mode
@@ -30,11 +25,23 @@ public class EightBallTrenchAuto extends AutoModeBase {
         final double targetDistance;
         final int shooterStop = 0;
         final int ballCount = 3;
-        final int ballNumber = 3;
+
+        double   fastSpeed = 72;
+        double    medSpeed = 48;
+        double   slowSpeed = 24;
+        double visionSpeed = 36;
+
+        double     accelTime = 1.0;     // time to accelerate to full speed
+        double lookaheadTime = 1.0;     // time to lookahead
+
+        PathSegment.Options   fastOptions = new PathSegment.Options(  fastSpeed,   fastSpeed/accelTime, fastSpeed/lookaheadTime, false);
+        PathSegment.Options    medOptions = new PathSegment.Options(   medSpeed,    medSpeed/accelTime,  medSpeed/lookaheadTime, false);
+        PathSegment.Options   slowOptions = new PathSegment.Options(  slowSpeed,   slowSpeed/accelTime, slowSpeed/lookaheadTime, false);
+
 
 
         Path backupToTrenchPath = new Path();     //lineup using limelight feed
-        backupToTrenchPath.add(new Waypoint());//start line
+        backupToTrenchPath.add(new Waypoint(FieldDimensions.portStartPose, fastOptions));//start line
         backupToTrenchPath.add(new Waypoint());//turn position
         backupToTrenchPath.add(new Waypoint());//turn on limelights
         //may need to be reversed 
@@ -51,7 +58,6 @@ public class EightBallTrenchAuto extends AutoModeBase {
         runAction(new SpeedUpShooterAction(targetDistance));
         runAction(new FeedBallsAction(ballCount));
         runAction(new WaitAction(doneShooting));
-        runAction(new FeedBallsAction(ballNumber));
         runAction(new SpeedUpShooterAction(shooterStop));
         //backup path to start of trench
         runAction(new PathFollowerAction(backupToTrenchPath));
@@ -66,7 +72,6 @@ public class EightBallTrenchAuto extends AutoModeBase {
         runAction(new SpeedUpShooterAction(targetDistance));
         runAction(new FeedBallsAction(ballCount));
         runAction(new WaitAction(doneShooting));
-        runAction(new FeedBallsAction(ballNumber));
         runAction(new SpeedUpShooterAction(shooterStop)); 
                  
     }

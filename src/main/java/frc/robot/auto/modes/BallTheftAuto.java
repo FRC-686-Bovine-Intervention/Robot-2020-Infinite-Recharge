@@ -9,6 +9,7 @@ import frc.robot.auto.actions.IntakeAction;
 import frc.robot.auto.actions.IntakeStopAction;
 import frc.robot.auto.actions.PathFollowerAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
+import frc.robot.auto.actions.WaitAction;
 import frc.robot.lib.util.Path;
 import frc.robot.lib.util.Path.Waypoint;
 import frc.robot.lib.util.PathSegment;
@@ -39,11 +40,11 @@ public class BallTheftAuto extends AutoModeBase {
         PathSegment.Options   slowOptions = new PathSegment.Options(  slowSpeed,   slowSpeed/accelTime, slowSpeed/lookaheadTime, false);
         PathSegment.Options visionOptions = new PathSegment.Options(visionSpeed, visionSpeed/accelTime,     visionLookaheadDist, true);
 
-        SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
-        Pose startPose = smartDashboardInteractions.getSelectedStartPose();
+        smartDashboard = SmartDashboardInteractions.getInstance();
+        Pose startPose = smartDashboard.getSelectedStartPose();
         Vector2d startPosition = startPose.getPosition();
 
-        double startDelaySec = smartDashboardInteractions.getStartDelay();
+        double startDelaySec = smartDashboard.getStartDelay();
 
 
 
@@ -57,6 +58,8 @@ public class BallTheftAuto extends AutoModeBase {
         approachingOpponentCellsPath.add(new Waypoint(FieldDimensions.opponentTrenchBallPos, slowOptions));
 
         //Begin movements
+        runAction(new WaitAction(startDelaySec));
+        
         runAction(new PathFollowerAction(startToOpponentTrench));
         runAction(new IntakeAction());
         runAction(new PathFollowerAction(approachingOpponentCellsPath));

@@ -34,6 +34,7 @@ public class FieldDimensions
     public static double startLineDist = 149.188;
     public static double portY = 247.00;
     public static double opponentTrenchBallx = 278.456;
+    public static double opponentTrenchApproachx = opponentTrenchBallx-24.00;
     public static double opponentTrenchBally = 64.705;
     public static double allianceTrenchCloseEdgex = 234.817;
     public static double allianceTrenchFarEdgex = 448.817;
@@ -54,8 +55,14 @@ public class FieldDimensions
 
 
 
+    public static double distOppTrenchToPort = 319.827; //inches
+    public static double angleOppTrenchToPort = 51.105 + 90; //degrees
+
+
+
     public static Vector2d portStartPos = new Vector2d(startLineDist, portY);
     public static Vector2d opponentTrenchBallPos = new Vector2d(opponentTrenchBallx, opponentTrenchBally);
+    public static Vector2d opponentTrenchApproachPos = new Vector2d(opponentTrenchApproachx, opponentTrenchBally);
     public static Vector2d allianceTrenchClosePos = new Vector2d(allianceTrenchCloseEdgex, allianceTrenchMiddley);
     public static Vector2d allianceTrenchFarPos = new Vector2d(allianceStopBeforeTrenchx, allianceTrenchMiddley);
 

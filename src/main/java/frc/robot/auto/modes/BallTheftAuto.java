@@ -75,7 +75,5 @@ public class BallTheftAuto extends AutoModeBase {
             runAction(new FeedBallsAction(3));
             shooter.setShooterRPM(0.0);
         }
-        
-
     }
 }

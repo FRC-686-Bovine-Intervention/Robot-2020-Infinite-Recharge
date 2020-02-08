@@ -1,5 +1,7 @@
 package frc.robot.auto.modes;
 
+import java.util.Vector;
+
 import frc.robot.Constants;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Pose;
@@ -32,6 +34,7 @@ public class FieldDimensions
 
     //Field-based positions
     public static double startLineDist = 149.188;
+    public static double portX = 28.260;
     public static double portY = 247.00;
     public static double opponentTrenchBallx = 278.456;
     public static double opponentTrenchApproachx = opponentTrenchBallx-24.00;
@@ -55,6 +58,12 @@ public class FieldDimensions
 
 
 
+    public static double distPortToPort = 0;
+    public static double anglePortToPort = 180.0;
+    public static double distMiddleToPort = 0;
+    public static double angleMiddleToPort = 0;
+
+
     public static double distOppTrenchToPort = 319.827; //inches
     public static double angleOppTrenchToPort = 51.105 + 90; //degrees
 
@@ -65,6 +74,7 @@ public class FieldDimensions
     public static Vector2d opponentTrenchApproachPos = new Vector2d(opponentTrenchApproachx, opponentTrenchBally);
     public static Vector2d allianceTrenchClosePos = new Vector2d(allianceTrenchCloseEdgex, allianceTrenchMiddley);
     public static Vector2d allianceTrenchFarPos = new Vector2d(allianceStopBeforeTrenchx, allianceTrenchMiddley);
+    public static Vector2d portPos = new Vector2d(portX, portY);
 
     //Balls
     public static Vector2d centerBlueSideBallPos = new Vector2d(centerBlueSideBallx, centerBlueSideBally);

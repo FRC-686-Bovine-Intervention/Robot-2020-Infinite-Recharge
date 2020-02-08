@@ -10,7 +10,7 @@ import frc.robot.auto.modes.*;
 /**
  * Just drive in a straight line, using VelocityHeading mode
  */
-public class EightBallTrenchAuto extends AutoModeBase {
+public class SixBallTrenchAuto extends AutoModeBase {
 
     public EightBallTrenchAuto() 
     { 

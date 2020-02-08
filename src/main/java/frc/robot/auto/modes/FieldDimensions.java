@@ -77,6 +77,8 @@ public class FieldDimensions
     public static Pose portStartPose = new Pose(startLineDist, portY, 0.0);
     public static Pose middleStartPose = new Pose(startLineDist, middleStartPosy, 0.0);
     public static Pose playerStationStartPose = new Pose(startLineDist, playerStationy, 0.0);
+    public static Pose portSumoPose = new Pose(startLineDist, playerStationy, 30.0);
+    public static Pose middleSumoPose = new Pose(startLineDist, playerStationy, 30.0);
 
 
 

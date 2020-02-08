@@ -38,6 +38,7 @@ public class Shooter implements Loop {
     public TalonSRX shooterMotor, hoodMotor, turretMotor;
     public VictorSPX shooterSlave;
     public Limelight camera = Limelight.getInstance();
+    public Pigeon pigeon = (Pigeon)Pigeon.getInstance();
     public double speed;
 
     //====================================================
@@ -300,7 +301,7 @@ public class Shooter implements Loop {
                     //Look around
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    double cHeading = Pigeon.getInstance().getHeadingDeg();
+                    double cHeading = pigeon.getHeadingDeg();
                     setTurretDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
                     break;
 

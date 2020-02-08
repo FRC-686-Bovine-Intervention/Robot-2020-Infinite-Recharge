@@ -86,7 +86,7 @@ public class EightBallAuto extends AutoModeBase {
 
         runAction(new WaitAction(startDelaySec)); //Delay should probably be zero due to length of this mode. Might move this elsewhere
 
-        AimShooterAction aimShooterAction1 = new AimShooterAction(backUpTargetPosStart.angle());
+        AimShooterAction aimShooterAction1 = new AimShooterAction(backUpTargetPosStart.angle()-pigeon.getHeadingDeg());
         runAction(aimShooterAction1);
         Vector2d targetPos = aimShooterAction1.getSensedTargetPos();
         if(targetPos != null){
@@ -116,7 +116,7 @@ public class EightBallAuto extends AutoModeBase {
         runAction(prepareToShoot);
 
         //Finding Target
-        AimShooterAction aimShooterAction2 = new AimShooterAction(backUpTargetPosMid.angle());
+        AimShooterAction aimShooterAction2 = new AimShooterAction(backUpTargetPosMid.angle()-pigeon.getHeadingDeg());
         runAction(aimShooterAction2);
         targetPos = null; //Resetting so that the last taken measurement won't affect the following code
         targetPos = aimShooterAction2.getSensedTargetPos();

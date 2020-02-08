@@ -385,8 +385,8 @@ public class Shooter implements Loop {
         turretMotor.set(ControlMode.MotionMagic, encoderUnits);
     }
 
-    
 
+    
     public double getSpeedError()
     {
         double sensorRPM = encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity())*(1.0/kShooterGearRatio);

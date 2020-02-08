@@ -87,7 +87,7 @@ public class Pigeon extends GyroBase
         }
 
 
-        public void zeroWithStartAngle(double startDegree){
+        public void zeroHeading(double startDegree){
                 zeroSensor();
                 setInitCondition(startDegree);
         }

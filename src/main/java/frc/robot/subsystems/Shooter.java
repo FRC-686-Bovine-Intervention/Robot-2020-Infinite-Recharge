@@ -300,7 +300,8 @@ public class Shooter implements Loop {
                     //Look around
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    setTurretDeg(180-Pigeon.getInstance().getHeadingDeg()); //Always facing our port. Relies on proper initialization
+                    double cHeading = Pigeon.getInstance().getHeadingDeg();
+                    setTurretDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
                     break;
 
                 case TRACKING:

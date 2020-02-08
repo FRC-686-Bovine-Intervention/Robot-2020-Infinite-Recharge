@@ -7,17 +7,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeExecuter;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
-import frc.robot.lib.sensors.NavX;
+import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Pose;
-import frc.robot.loops.DriveLoop;
 import frc.robot.loops.LoopController;
-import frc.robot.subsystems.ConveyorBelt;
-import frc.robot.subsystems.Drive;
-import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Lift;
-import frc.robot.subsystems.Shooter;
 import frc.robot.vision.VisionDriveAssistant;
 import frc.robot.vision.VisionTargetList;
 
@@ -33,6 +27,7 @@ public class Robot extends TimedRobot {
 	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
+  Pigeon pigeon = (Pigeon)Pigeon.getInstance();
 
   //Drive drive = Drive.getInstance();
   //ControlPanel controlPanel;
@@ -51,7 +46,7 @@ public class Robot extends TimedRobot {
     // loopController.register(DriveLoop.getInstance());
     // loopController.register(Intake.getInstance());
     // loopController.register(Conveyor.getInstance());
-    loopController.register(Shooter.getInstance());
+    // loopController.register(Shooter.getInstance());
     // loopController.register(Lift.getInstance());
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
@@ -121,7 +116,7 @@ public class Robot extends TimedRobot {
     boolean logToSmartDashboard = true;
     robotLogger.setOutputMode(logToFile, logToSmartDashboard);
 
-    NavX.getInstance().zeroSensor();
+    pigeon.zeroHeading(smartDashboardInteractions.getSelectedStartPose().getHeadingDeg()); //Setting up gyro with initial conditions
 
     loopController.start();
 		Shuffleboard.startRecording();

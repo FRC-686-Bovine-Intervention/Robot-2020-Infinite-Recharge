@@ -66,6 +66,7 @@ public class ControlPanel implements Loop {
     public static Color kGreenTarget =  ColorMatch.makeColor(0.16, 0.57, 0.26);
     public static Color kRedTarget =    ColorMatch.makeColor(0.51, 0.34, 0.14);
     public static Color kYellowTarget = ColorMatch.makeColor(0.31, 0.55, 0.12);
+    public ColorEnum detectedColorEnum = ColorEnum.UNKNOWN;
 
     public static enum ColorEnum
     {
@@ -171,7 +172,6 @@ public class ControlPanel implements Loop {
     public void run()
     {
         Color detectedColor = colorSensor.getColor();
-        ColorEnum detectedColorEnum = ColorEnum.UNKNOWN;
         ColorMatchResult match = colorMatch.matchClosestColor(detectedColor);
         if      (match.color == kBlueTarget)    {detectedColorEnum = ColorEnum.BLUE;}
         else if (match.color == kGreenTarget)   {detectedColorEnum = ColorEnum.GREEN;}
@@ -212,6 +212,17 @@ public class ControlPanel implements Loop {
             do again
         set previous action to rotate
         */
+        ColorEnum savedColor = detectedColorEnum;
+        panelMaster.set(ControlMode.Velocity, 60);
+        int rotation = 0;
+        while (rotation >= 6)
+        {
+            if (detectedColorEnum == savedColor)
+            {
+                rotation += 1;
+            }
+        }
+        
     }
 
     public void positionControl()

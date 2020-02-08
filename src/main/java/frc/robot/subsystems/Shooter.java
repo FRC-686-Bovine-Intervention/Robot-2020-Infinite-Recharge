@@ -5,7 +5,6 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
@@ -15,7 +14,7 @@ import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
-import frc.robot.lib.sensors.NavX;
+import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Kinematics;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
@@ -39,6 +38,7 @@ public class Shooter implements Loop {
     public TalonSRX shooterMotor, hoodMotor, turretMotor;
     public VictorSPX shooterSlave;
     public Limelight camera = Limelight.getInstance();
+    public Pigeon pigeon = (Pigeon)Pigeon.getInstance();
     public double speed;
 
     //====================================================
@@ -99,9 +99,6 @@ public class Shooter implements Loop {
     public Vector2d shooterVelocity;
 
 
-    public static double startAngleDeg = 30; //0 degrees is pointing directly at the outer port, CCW is positive
-    public double stepDeg = 2;
-    public static double searchSweepDeg = 90;
 
     public static double maxRotationTrackingDeg = 360;
     public static double maxRotationDeg = 720;
@@ -236,8 +233,8 @@ public class Shooter implements Loop {
     //Loop Functions
     @Override
     public void onStart() {
-        //stop();
-        //zeroSensors();
+        stop();
+        zeroSensors();
     }
 
     @Override
@@ -254,7 +251,9 @@ public class Shooter implements Loop {
             if(camera.getIsTargetFound()){
                 targetLostCount = 0;
                 targetDisplacement = getTargetDisplacement();
-                cState = ShooterState.TRACKING; //Jump to the tracking status in order to keep it in view
+                if(cState != ShooterState.SHOOTING){
+                    cState = ShooterState.TRACKING; //Jump to the tracking status in order to keep it in view
+                }
             } else if(cState == ShooterState.READJUSTING){
                 //Don't add to the counter, give the turret time to readjust
                 targetDisplacement = lastTargetPos; 
@@ -302,16 +301,8 @@ public class Shooter implements Loop {
                     //Look around
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    
-                    double nextPos = Math.toDegrees(getTurretAbsoluteAngleRad()) + stepDeg;
-                    double robotHeading = NavX.getInstance().getHeadingDeg()+startAngleDeg;
-                    double turretHeading = nextPos + (Math.PI/2.0);
-                    
-                    if(turretHeading > robotHeading+(searchSweepDeg/2.0) || turretHeading < robotHeading-(searchSweepDeg/2.0)){
-                        stepDeg *= -1.0; //reverse direction
-                    }
-
-                    setTurretDeg(nextPos);
+                    double cHeading = pigeon.getHeadingDeg();
+                    setTurretDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
                     break;
 
                 case TRACKING:
@@ -352,7 +343,7 @@ public class Shooter implements Loop {
 
     @Override
     public void onStop() {
-        //stop();
+        stop();
     }
 
     public void stop()
@@ -387,20 +378,10 @@ public class Shooter implements Loop {
         double radians = Math.toRadians(degrees);
         double cAbsAngle = getTurretAbsoluteAngleRad();
         double cAngle = getTurretAngleRad();
-        double targetAngle;
 
-        if(cAbsAngle < 0){
-            cAbsAngle += Math.PI*2.0;
-        }
-        double CWDist = radians-cAbsAngle;
-        double CCWDist = radians-cAbsAngle + (Math.PI*2);
-        if(Math.abs(CWDist) < Math.abs(CCWDist)){
-            targetAngle = cAngle + CWDist;
-        } else {
-            targetAngle = cAngle + CCWDist;
-        }
+        double targetRads = getAngleError(radians, cAbsAngle) + cAngle;
 
-        double encoderUnits = turretDegreesToEncoderUnits(Math.toDegrees(targetAngle));
+        double encoderUnits = turretDegreesToEncoderUnits(Math.toDegrees(targetRads));
         turretMotor.set(ControlMode.MotionMagic, encoderUnits);
     }
 
@@ -443,7 +424,7 @@ public class Shooter implements Loop {
 
     public Vector2d calcBallVelocity(Vector2d targetDisplacement){
         double targetVelocityMag = getTargetBallVelMag(targetDisplacement.length());
-        Vector2d targetVelocity = new Vector2d(targetVelocityMag, 0); //Used to maintain magnitude
+        Vector2d targetVelocity = new Vector2d(0, targetVelocityMag); //Used to maintain magnitude
         targetVelocity.rotate(targetDisplacement.angle()); //Rotating it back to the correct rotation 
 
         Vector2d shooterVelocity = getShooterVelocity(); //Get the velocity of the shooter on the robot
@@ -463,7 +444,7 @@ public class Shooter implements Loop {
             SmartDashboard.putNumber("Shooter/Targety", targetY);
             SmartDashboard.putNumber("Shooter/TargetDist", detectedTargetPos.length());
             detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
-            detectedTargetPos = detectedTargetPos.rotate(getTurretAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
+            detectedTargetPos = detectedTargetPos.rotate(getTurretAbsoluteAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
             //Averaging:
             if(targetPos == null){
@@ -489,9 +470,9 @@ public class Shooter implements Loop {
            double motionRadius = robotSpeed.linearSpeed/robotSpeed.angularSpeed;
            double shooterMotionRadius = lawOfCosines(motionRadius, shooterPosFromRobot.length(), shooterPosFromRobot.angle(new Vector2d(-1,0)));
            double shooterVelMagnitude = robotSpeed.angularSpeed*shooterMotionRadius;
-           shooterVelocity = new Vector2d(0, Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed)); //Shooter is considered '90' degrees as this is the direction of the robot
+           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0); //Shooter is considered '90' degrees as this is the direction of the robot
         } else {
-            shooterVelocity = new Vector2d(0, robotSpeed.linearSpeed);
+            shooterVelocity = new Vector2d(robotSpeed.linearSpeed, 0);
         }
 
         return shooterVelocity;
@@ -509,7 +490,7 @@ public class Shooter implements Loop {
 
     public double getTargetShooterVelocity(double distance){
         //This is more useful for autonomous
-        return (getTargetBallVelMag(distance)/(0.5*shooterWheelRadius));
+        return (getTargetBallVelMag(distance)/(0.5*shooterWheelRadius))*(30.0/Math.PI);
     }
 
     public double getTurretAngleRad(){
@@ -520,8 +501,8 @@ public class Shooter implements Loop {
     public double getTurretAbsoluteAngleRad(){
         //Returns angle within pi to -pi. Positive is CCW
         double radians = getTurretAngleRad();
-        double adjustedRad = Math.abs(radians % (2.0*Math.PI));
-        adjustedRad = adjustedRad < Math.PI ? adjustedRad : adjustedRad-(2.0*Math.PI);
+        double adjustedRad = radians % (2.0*Math.PI);
+        adjustedRad = Math.abs(adjustedRad) < Math.PI ? adjustedRad : Math.copySign(Math.abs(adjustedRad)-(2.0*Math.PI),-adjustedRad);
         return adjustedRad;
     }
 
@@ -540,6 +521,21 @@ public class Shooter implements Loop {
     }
 
 
+
+    public double getAngleError(double targetRad, double actualRad){
+        //Positive output indicates CCW motion from actual to target
+        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad;
+        targetRad = targetRad < 0 ? targetRad+(Math.PI*2.0):targetRad;
+
+        actualRad -= targetRad; //Subtracting to make the target "0"
+
+        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad; //again readjusting to positive measures
+        
+        double distCW = actualRad-(Math.PI*2.0);
+        double distCCW = actualRad;
+        double output = Math.abs(distCW)<Math.abs(distCCW) ? distCW : distCCW;
+        return output;
+    }
 
     public double lawOfCosines(double _leg1, double _leg2, double angleRad){
         //Very original function

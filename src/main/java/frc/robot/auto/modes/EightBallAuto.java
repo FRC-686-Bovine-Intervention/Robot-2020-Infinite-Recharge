@@ -10,6 +10,7 @@ import frc.robot.auto.actions.Action;
 import frc.robot.auto.actions.AimShooterAction;
 import frc.robot.auto.actions.FeedBallsAction;
 import frc.robot.auto.actions.IntakeAction;
+import frc.robot.auto.actions.IntakeStopAction;
 import frc.robot.auto.actions.ParallelAction;
 import frc.robot.auto.actions.PathFollowerAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
@@ -79,8 +80,11 @@ public class EightBallAuto extends AutoModeBase {
 
 
 
+        //============================
+        //Execution:
+        //============================
 
-        runAction(new WaitAction(startDelaySec));
+        runAction(new WaitAction(startDelaySec)); //Delay should probably be zero due to length of this mode. Might move this elsewhere
 
         AimShooterAction aimShooterAction1 = new AimShooterAction(backUpTargetPosStart.angle());
         runAction(aimShooterAction1);
@@ -94,30 +98,39 @@ public class EightBallAuto extends AutoModeBase {
         shooter.setShooterRPM(0.0);
         shooter.setTurretDeg(0.0);
 
-        //Collecting Center Balls
-        runAction(new PathFollowerAction(startToMid));
-        runAction(new IntakeAction());
+        //Moving To Center
+        List<Action> prepareToCollectActions = new ArrayList<Action>();
+        prepareToCollectActions.add(new PathFollowerAction(startToMid));
+        prepareToCollectActions.add(new IntakeAction());
+        runAction(new ParallelAction(prepareToCollectActions));
+
+        //Collecting
         runAction(new PathFollowerAction(ballCollectionPath));
 
+        //Preemptively getting ready to shoot while moving into position
         List<Action> actions = new ArrayList<Action>();
         actions.add(new SpeedUpShooterAction(backUpTargetPosMid.length()));
-        actions.add(new )
-
+        actions.add(new IntakeStopAction());
+        actions.add(new PathFollowerAction(moveToShootPath));
         ParallelAction prepareToShoot = new ParallelAction(actions);
         runAction(prepareToShoot);
-        runAction(new PathFollowerAction(moveToShootPath));
 
+        //Finding Target
+        AimShooterAction aimShooterAction2 = new AimShooterAction(backUpTargetPosMid.angle());
+        runAction(aimShooterAction2);
+        targetPos = null; //Resetting so that the last taken measurement won't affect the following code
+        targetPos = aimShooterAction2.getSensedTargetPos();
 
+        //Determining if the speed should be changed and shooting:
+        if(targetPos != null){
+            runAction(new SpeedUpShooterAction(targetPos.length()));
+        }
+        //Shooter was already spun up to speed, so no need to handle target loss if it were to occur
+        runAction(new FeedBallsAction(6));
+        shooter.setShooterRPM(0.0);
+        shooter.setTurretDeg(0.0);
 
-
-
-
-
-
-
-        runAction(new WaitAction(startDelaySec));
-
-
+        //Done!
     }
 
 }

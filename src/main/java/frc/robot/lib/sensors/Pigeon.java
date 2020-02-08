@@ -28,6 +28,8 @@ public class Pigeon extends GyroBase
         double calPitch = 0.0;
         double calRoll = 0.0;
 
+        double physicalStartAngle = 0;
+
         // constructors
         public Pigeon() 
         {
@@ -71,6 +73,10 @@ public class Pigeon extends GyroBase
                 pigeon.getYawPitchRoll(ypr); // fill array
                 calPitch = ypr[kPITCH];
                 calRoll = ypr[kROLL];
+        }
+
+        public void setInitCondition(double degree){
+                physicalStartAngle = degree;
         }
 
 }

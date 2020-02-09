@@ -1,18 +1,23 @@
 package frc.robot.auto.modes;
 
-import frc.robot.auto.*;
-import frc.robot.auto.actions.*;
-import frc.robot.lib.util.*;
-import frc.robot.lib.util.Path.*;
+import frc.robot.auto.AutoModeBase;
+import frc.robot.auto.AutoModeEndedException;
+import frc.robot.auto.actions.IntakeAction;
+import frc.robot.auto.actions.IntakeStopAction;
+import frc.robot.auto.actions.PathFollowerAction;
+import frc.robot.auto.actions.WaitAction;
+import frc.robot.auto.actions.setTurretAction;
+import frc.robot.lib.util.Path;
 import frc.robot.lib.util.Path.Waypoint;
-import frc.robot.auto.modes.*;
+import frc.robot.lib.util.PathSegment;
+import frc.robot.auto.modes.FieldDimensions;
 
 /**
  * Just drive in a straight line, using VelocityHeading mode
  */
 public class SixBallTrenchAuto extends AutoModeBase {
 
-    public EightBallTrenchAuto() 
+    public SixBallTrenchAuto() 
     { 
     }
     

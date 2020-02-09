@@ -37,19 +37,19 @@ public class SixBallTrenchAuto extends AutoModeBase {
         PathSegment.Options   fastOptions = new PathSegment.Options(  fastSpeed,   fastSpeed/accelTime, fastSpeed/lookaheadTime, false);
         PathSegment.Options    medOptions = new PathSegment.Options(   medSpeed,    medSpeed/accelTime,  medSpeed/lookaheadTime, false);
         PathSegment.Options   slowOptions = new PathSegment.Options(  slowSpeed,   slowSpeed/accelTime, slowSpeed/lookaheadTime, false);
-
+        PathSegment.Options visionOptions = new PathSegment.Options(visionSpeed, visionSpeed/accelTime,     visionLookaheadDist, true);
 
 
         Path backupToTrenchPath = new Path();     //lineup using limelight feed
         backupToTrenchPath.add(new Waypoint(FieldDimensions.portStartPose, fastOptions));//start line
-        backupToTrenchPath.add(new Waypoint());//turn position
-        backupToTrenchPath.add(new Waypoint());//turn on limelights
+        backupToTrenchPath.add(new Waypoint(FieldDimensions.allianceTrenchCloseEdgex, fastOptions));//turn position
+        // backupToTrenchPath.add(new Waypoint(FieldDimensions.allianceStopBeforeTrenchx, visionOptions));//turn on limelights
         //may need to be reversed 
 
         //new path drive forward path while intaking and lineup to shoot using limelights
         Path intakeTrenchPath = new Path();
-        intakeTrenchPath.add(new Waypoint());//turn on limelights end point
-        intakeTrenchPath.add(new Waypoint()); //a foot away from last ball intaked
+        intakeTrenchPath.add(new Waypoint(FieldDimensions.allianceTrenchCloseEdgex,medOptions));//turn on limelights end point
+        intakeTrenchPath.add(new Waypoint(FieldDimensions.allianceStopBeforeTrenchx,medOptions)); //a foot away from last ball intaked
         //May need to be reversed
 
         // Actions--------------------------------------------------------------------------------------------------------------------------------

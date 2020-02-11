@@ -239,12 +239,16 @@ public class Shooter implements Loop {
 
     @Override
     public void onLoop() {
-        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
-            //Order of loop: 
-            //First part: determining appropriate state:
-            //  Check for target - determine if it has been lost - handle user input - determine if the turret is spun too far
-            //Second part: react according to determined state
-            //  Switch statement contains code necessary to each state 
+        // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+ 
+        // GoalEnum goal = GoalEnum.HIGH_GOAL;
+        // if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
+        // {
+        //     goal = GoalEnum.LOW_GOAL;
+        //     Limelight.getInstance().setPipeline(1);
+        // } else {
+        //     Limelight.getInstance().setPipeline(0);
+        // }
 
             //Checking the target status and determining its relative displacement:
             Vector2d targetDisplacement;
@@ -446,16 +450,10 @@ public class Shooter implements Loop {
             detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
             detectedTargetPos = detectedTargetPos.rotate(getTurretAbsoluteAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
-            //Averaging:
-            if(targetPos == null){
-                //First time through
-                targetPos = detectedTargetPos;
-            } else {
-                //Otherwise just keep averaging the position
-                targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing); //Must update targetPos for next pass through the program
-            }
-
-            return targetPos;
+        //Averaging:
+        if(targetPos == null){
+            //First time through
+            targetPos = detectedTargetPos;
         } else {
             return null; //In the event that the target can not be found
         }

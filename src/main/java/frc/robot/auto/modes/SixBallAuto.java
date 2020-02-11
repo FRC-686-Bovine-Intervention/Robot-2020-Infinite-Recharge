@@ -5,12 +5,13 @@ import frc.robot.auto.AutoModeEndedException;
 import frc.robot.lib.util.Path;
 import frc.robot.lib.util.Path.Waypoint;
 
+
 /**
  * Just drive in a straight line, using VelocityHeading mode
  */
-public class EightBallTrenchAuto extends AutoModeBase {
+public class SixBallAuto extends AutoModeBase {
 
-    public EightBallTrenchAuto() 
+    public SixBallAuto() 
     { 
     }
     
@@ -18,7 +19,7 @@ public class EightBallTrenchAuto extends AutoModeBase {
     @Override
     protected void routine() throws AutoModeEndedException 
     {
-        
+        Waypo9n
         boolean doneShooting = true;
 
         Path backupToTrenchPath = new Path();     //lineup using limelight feed

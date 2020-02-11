@@ -318,7 +318,6 @@ public class ControlPanel implements Loop {
         */
     }
 
-<<<<<<< HEAD
     public void alignSensor()
     {
         /*
@@ -327,15 +326,6 @@ public class ControlPanel implements Loop {
         sliderMaster.set(ControlMode.Position, Vector2d.radiansToDegrees*(kTableToWheel-(ultrasonic.update()+kSensorToBumper+kSliderZeroToBumer)));
     }
 
-=======
-    public void adjustSensor(double adjustInches){
-        //Positive adjust indicates sensor must move away from sensed wall
-        
-    }
-
-
-
->>>>>>> ControlPanel
     public ColorEnum convertColor(ColorEnum color)
     {
         switch (color)

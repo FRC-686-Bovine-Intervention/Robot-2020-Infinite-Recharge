@@ -75,7 +75,7 @@ public class ControlPanel implements Loop {
 
     public static enum SpinnerStateEnum
     {
-        IDLE, ROTATION, SENSOR, WAIT, MANUAL;
+        IDLE, DEPLOYED, ROTATION, SENSOR, WAIT, MANUAL;
     }
 
     public SpinnerStateEnum SpinnerState = SpinnerStateEnum.IDLE;
@@ -173,6 +173,10 @@ public class ControlPanel implements Loop {
     {
         Color detectedColor = colorSensor.getColor();
         ColorMatchResult match = colorMatch.matchClosestColor(detectedColor);
+        int proximity = colorSensor.getProximity();
+        if(SmartDashboard.getBoolean("ControlPanel/Debug", false)){
+            
+        }
         if      (match.color == kBlueTarget)    {detectedColorEnum = ColorEnum.BLUE;}
         else if (match.color == kGreenTarget)   {detectedColorEnum = ColorEnum.GREEN;}
         else if (match.color == kRedTarget)     {detectedColorEnum = ColorEnum.RED;}
@@ -183,21 +187,7 @@ public class ControlPanel implements Loop {
         SmartDashboard.putNumber("ControlPanel/Blue",           detectedColor.blue);
         SmartDashboard.putNumber("ControlPanel/Confidence",     match.confidence*100);
         SmartDashboard.putString("ControlPanel/DetectedColor",  detectedColorEnum.name());
-        SmartDashboard.putString("ControlPanel/ConvertedColor", convertColor(detectedColorEnum).name());
-        if(!SmartDashboard.getBoolean("ControlPanel/Debug", false)){
-            /*
-            When sensors activate
-            align sensor
-            if previous action was nothing then
-                rotation control
-            else
-                position contol
-            */
-        }
-        else
-        {
-
-        }
+        SmartDashboard.putNumber("ControlPanel/Proximity",      proximity);
     }
 
     public void rotationControl()

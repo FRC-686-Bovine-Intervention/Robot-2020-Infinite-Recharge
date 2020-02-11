@@ -1,24 +1,26 @@
 package frc.robot.auto.actions;
 
-import frc.robot.subsystems.Shooter;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.subsystems.Intake;
 
 public class IntakeAction implements Action {
 
-    Shooter shooter = Shooter.getInstance();
+    Intake intake = Intake.getInstance();
     boolean finished = false;
+    double speed = 1;
 
     public IntakeAction() {}
 
     @Override
     public void start() {
-        shooter.onLoop();
+        intake.setPower(speed);
+        intake.extendToFloor();
         finished = false;
     }
 
     @Override
     public void update() {
-         finished = shooter.nearTarget(false);
+         finished = true;
     }
 
     @Override

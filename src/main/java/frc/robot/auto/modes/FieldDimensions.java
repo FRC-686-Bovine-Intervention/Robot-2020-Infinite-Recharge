@@ -20,8 +20,6 @@ public class FieldDimensions
 
     }
 
-    //Red is to the right (postive x)
-
 	// dimensions of field components
 	public static double kFieldLengthX = 648;       // 54'
 	public static double kFieldLengthY = 324;       // 27'
@@ -90,7 +88,7 @@ public class FieldDimensions
     public static Vector2d centerRedSidePostBallPos = new Vector2d(centerRedSidePostBallx, centerRedSidePostBally);
     public static Vector2d centerRedSideFarBallPos = new Vector2d(centerRedSideFarBallx, centerRedSideFarBally);
 
-
+    //start positions part 2
     public static Pose portStartPose = new Pose(startLineDist, portY, 0.0);
     public static Pose middleStartPose = new Pose(startLineDist, middleStartPosy, 0.0);
     public static Pose playerStationStartPose = new Pose(startLineDist, playerStationy, 0.0);

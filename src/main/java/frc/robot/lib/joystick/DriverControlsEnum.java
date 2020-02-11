@@ -11,6 +11,7 @@ public enum DriverControlsEnum {    // Controls Description
     QUICK_TURN,                     // to make TriggerDrive joysticks happy
     LOCK_LIFT,                      // Activates the cylinder used to lock the lift
     UNLOCK_LIFT,                    // Unlocks the lift
-    TOGGLE_PTO                      // Toggles the transmission for PTO and drive
+    TOGGLE_PTO,                     // Toggles the transmission for PTO and drive
+    CONTROL_PANEL,                  // Starts the control panel
 }
 

@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.lang.annotation.Repeatable;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
@@ -12,7 +14,12 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.Constants;
+import frc.robot.lib.joystick.DriverControlsBase;
+import frc.robot.lib.joystick.DriverControlsEnum;
+import frc.robot.lib.joystick.SelectedDriverControls;
+import frc.robot.lib.sensors.UltrasonicSensor;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.lib.util.Vector2d;
 import frc.robot.loops.Loop;
 
 public class ControlPanel implements Loop {
@@ -30,7 +37,9 @@ public class ControlPanel implements Loop {
     // Members
     //====================================================
     public TalonSRX panelMaster;
+    public TalonSRX sliderMaster;
     public ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
+    public UltrasonicSensor ultrasonic = new UltrasonicSensor(_port);
     public ColorMatch colorMatch = new ColorMatch();
 
     public double speed;
@@ -68,6 +77,10 @@ public class ControlPanel implements Loop {
     public static Color kYellowTarget = ColorMatch.makeColor(0.31, 0.55, 0.12);
     public ColorEnum detectedColorEnum = ColorEnum.UNKNOWN;
 
+    public static double kTableToWheel = 26;
+    public static double kSensorToBumper = 3;
+    public static double kSliderZeroToBumer = 5;
+
     public static enum ColorEnum
     {
         BLUE, GREEN, RED, YELLOW, UNKNOWN;
@@ -75,16 +88,18 @@ public class ControlPanel implements Loop {
 
     public static enum SpinnerStateEnum
     {
-        IDLE, ROTATION, SENSOR, WAIT, MANUAL;
+        IDLE, ROTATION, POSITION, WAIT, MANUAL;
     }
 
     public SpinnerStateEnum SpinnerState = SpinnerStateEnum.IDLE;
+    public SpinnerStateEnum PreviousAction = SpinnerStateEnum.IDLE;
 
     //Ignore this comment
 
     public ControlPanel() 
     {
         panelMaster = new TalonSRX(Constants.kPanelMasterId);
+        sliderMaster = new TalonSRX(Constants.kSliderMasterId);
 
         //====================================================
         // Configure Deploy Motors
@@ -171,6 +186,7 @@ public class ControlPanel implements Loop {
 
     public void run()
     {
+        DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
         Color detectedColor = colorSensor.getColor();
         ColorMatchResult match = colorMatch.matchClosestColor(detectedColor);
         if      (match.color == kBlueTarget)    {detectedColorEnum = ColorEnum.BLUE;}
@@ -186,13 +202,23 @@ public class ControlPanel implements Loop {
         SmartDashboard.putString("ControlPanel/ConvertedColor", convertColor(detectedColorEnum).name());
         if(!SmartDashboard.getBoolean("ControlPanel/Debug", false)){
             /*
-            When sensors activate
+            When ButtonPress activate
             align sensor
             if previous action was nothing then
                 rotation control
             else
                 position contol
             */
+            if (driverControls.getBoolean(DriverControlsEnum.CONTROL_PANEL))
+            {
+                alignSensor();
+                if (PreviousAction == SpinnerStateEnum.IDLE)
+                {
+                    rotationControl();
+                } else {
+                    positionControl();
+                }
+            }
         }
         else
         {
@@ -208,10 +234,8 @@ public class ControlPanel implements Loop {
         count number of times saved color goes past
         if number >= 6 then
             stop
-        if driver doesn't drive away within 2 seconds then
-            do again
-        set previous action to rotate
         */
+        SpinnerState = SpinnerStateEnum.ROTATION;
         ColorEnum savedColor = detectedColorEnum;
         panelMaster.set(ControlMode.Velocity, 60);
         int rotation = 0;
@@ -231,9 +255,15 @@ public class ControlPanel implements Loop {
         set motor to 60 rpm * gear ratio
         if color == convert FMS color then
             stop
-        if driver doesn't drive away within 2 seconds then
-            do again
         */
+    }
+
+    public void alignSensor()
+    {
+        /*
+        Confusion
+        */
+        sliderMaster.set(ControlMode.Position, Vector2d.radiansToDegrees*(kTableToWheel-(ultrasonic.update()+kSensorToBumper+kSliderZeroToBumer)));
     }
 
     public ColorEnum convertColor(ColorEnum color)

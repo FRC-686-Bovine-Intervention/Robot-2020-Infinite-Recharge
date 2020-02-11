@@ -51,6 +51,9 @@ public class Constants extends ConstantsBase {
     public static int kLiftLockSolenoidChannel =    3;
     
     public static int kLiftSensorChannel =          1010;
+    public static int kPanelUltrasonicChannel =     10000;
+    public static int kPanelLeftTouchChannel =      100101;
+    public static int kPanelRightTouchChannel =     10101;
     
     public static double kIntakeVoltage = 0.5;
     public static double kConveyorRPM = 30.0;

@@ -4,24 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import frc.robot.SmartDashboardInteractions;
-import frc.robot.auto.AutoModeBase;
-import frc.robot.auto.AutoModeEndedException;
-import frc.robot.auto.actions.Action;
-import frc.robot.auto.actions.AimShooterAction;
-import frc.robot.auto.actions.FeedBallsAction;
-import frc.robot.auto.actions.IntakeAction;
-import frc.robot.auto.actions.IntakeStopAction;
-import frc.robot.auto.actions.ParallelAction;
-import frc.robot.auto.actions.PathFollowerAction;
-import frc.robot.auto.actions.SpeedUpShooterAction;
-import frc.robot.auto.actions.WaitAction;
-import frc.robot.lib.sensors.Pigeon;
-import frc.robot.lib.util.Path;
-import frc.robot.lib.util.PathSegment;
-import frc.robot.lib.util.Pose;
-import frc.robot.lib.util.Vector2d;
+import frc.robot.auto.*;
+import frc.robot.auto.actions.*;
+import frc.robot.lib.util.*;
 import frc.robot.lib.util.Path.Waypoint;
 import frc.robot.subsystems.Shooter;
+import frc.robot.lib.sensors.Pigeon;
 
 public class EightBallAuto extends AutoModeBase {
 

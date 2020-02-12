@@ -15,12 +15,9 @@ import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.Constants;
-<<<<<<< HEAD
 import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
-=======
->>>>>>> ControlPanel
 import frc.robot.lib.sensors.UltrasonicSensor;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Vector2d;
@@ -41,15 +38,10 @@ public class ControlPanel implements Loop {
     // Members
     //====================================================
     public TalonSRX panelMaster;
-<<<<<<< HEAD
     public TalonSRX sliderMaster;
-=======
-    public TalonSRX sliderMotor;
->>>>>>> ControlPanel
     public ColorSensorV3 colorSensor = new ColorSensorV3(I2C.Port.kOnboard);
     public UltrasonicSensor ultrasonic = new UltrasonicSensor(_port);
     public ColorMatch colorMatch = new ColorMatch();
-    public UltrasonicSensor ultrasonic;
     public DigitalInput leftTouchSensor, rightTouchSensor;
 
     public double speed;
@@ -116,11 +108,7 @@ public class ControlPanel implements Loop {
     public ControlPanel() 
     {
         panelMaster = new TalonSRX(Constants.kPanelMasterId);
-<<<<<<< HEAD
         sliderMaster = new TalonSRX(Constants.kSliderMasterId);
-=======
-        sliderMotor = new TalonSRX(Constants.kSliderMotorId);
->>>>>>> ControlPanel
 
         //====================================================
         // Configure Deploy Motors
@@ -157,33 +145,33 @@ public class ControlPanel implements Loop {
 
 
         //Slider Motor set up
-        sliderMotor.configFactoryDefault();
+        sliderMaster.configFactoryDefault();
 
 		// configure encoder
-		sliderMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-		sliderMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
-        sliderMotor.setInverted(true);   // set to have green LEDs when driving forward
-        sliderMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		sliderMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		sliderMaster.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+        sliderMaster.setInverted(true);   // set to have green LEDs when driving forward
+        sliderMaster.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		
 		// set relevant frame periods to be at least as fast as periodic rate
-		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		sliderMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		sliderMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
 		
 		// configure velocity loop PID 
-        sliderMotor.selectProfileSlot(kSlotIdx, Constants.kTalonPidIdx); 
-        sliderMotor.config_kF(kSlotIdx, kKfSlider, Constants.kTalonTimeoutMs); 
-        sliderMotor.config_kP(kSlotIdx, kKpSlider, Constants.kTalonTimeoutMs); 
-        sliderMotor.config_kI(kSlotIdx, kKiSlider, Constants.kTalonTimeoutMs); 
-        sliderMotor.config_kD(kSlotIdx, kKdSlider, Constants.kTalonTimeoutMs);
-        sliderMotor.configAllowableClosedloopError(kSlotIdx, kAllowableError, Constants.kTalonTimeoutMs);
+        sliderMaster.selectProfileSlot(kSlotIdx, Constants.kTalonPidIdx); 
+        sliderMaster.config_kF(kSlotIdx, kKfSlider, Constants.kTalonTimeoutMs); 
+        sliderMaster.config_kP(kSlotIdx, kKpSlider, Constants.kTalonTimeoutMs); 
+        sliderMaster.config_kI(kSlotIdx, kKiSlider, Constants.kTalonTimeoutMs); 
+        sliderMaster.config_kD(kSlotIdx, kKdSlider, Constants.kTalonTimeoutMs);
+        sliderMaster.configAllowableClosedloopError(kSlotIdx, kAllowableError, Constants.kTalonTimeoutMs);
         
         // current limits
-        sliderMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
-        sliderMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
-        sliderMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
-        sliderMotor.enableCurrentLimit(true);
+        sliderMaster.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        sliderMaster.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        sliderMaster.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        sliderMaster.enableCurrentLimit(true);
 
 
         ultrasonic = new UltrasonicSensor(Constants.kPanelUltrasonicChannel);

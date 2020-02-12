@@ -240,12 +240,6 @@ public class Shooter implements Loop {
     @Override
     public void onLoop() {
         if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
-            //Order of loop: 
-            //First part: determining appropriate state:
-            //  Check for target - determine if it has been lost - handle user input - determine if the turret is spun too far
-            //Second part: react according to determined state
-            //  Switch statement contains code necessary to each state 
-
             //Checking the target status and determining its relative displacement:
             Vector2d targetDisplacement;
             if(camera.getIsTargetFound()){
@@ -451,12 +445,11 @@ public class Shooter implements Loop {
                 //First time through
                 targetPos = detectedTargetPos;
             } else {
-                //Otherwise just keep averaging the position
-                targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing); //Must update targetPos for next pass through the program
+                targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing);
             }
-
             return targetPos;
-        } else {
+        } 
+        else {
             return null; //In the event that the target can not be found
         }
     }
@@ -470,7 +463,7 @@ public class Shooter implements Loop {
            double motionRadius = robotSpeed.linearSpeed/robotSpeed.angularSpeed;
            double shooterMotionRadius = lawOfCosines(motionRadius, shooterPosFromRobot.length(), shooterPosFromRobot.angle(new Vector2d(-1,0)));
            double shooterVelMagnitude = robotSpeed.angularSpeed*shooterMotionRadius;
-           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0); //Shooter is considered '90' degrees as this is the direction of the robot
+           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0);
         } else {
             shooterVelocity = new Vector2d(robotSpeed.linearSpeed, 0);
         }

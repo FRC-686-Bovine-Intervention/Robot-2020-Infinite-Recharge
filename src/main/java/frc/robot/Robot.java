@@ -2,7 +2,6 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeExecuter;
 import frc.robot.lib.joystick.SelectedDriverControls;
@@ -10,21 +9,15 @@ import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
-import frc.robot.lib.util.Pose;
 import frc.robot.loops.LoopController;
 import frc.robot.vision.VisionDriveAssistant;
-import frc.robot.vision.VisionTargetList;
-
 
 
 public class Robot extends TimedRobot {
-  private String m_autoSelected;
-  private final SendableChooser<String> m_chooser = new SendableChooser<>();
   SelectedDriverControls selectedDriverControls = SelectedDriverControls.getInstance();
   private AutoModeExecuter autoModeExecuter = null;
   private LoopController loopController;
 
-	VisionTargetList visionTargetList = VisionTargetList.getInstance();
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
   Pigeon pigeon = (Pigeon)Pigeon.getInstance();
@@ -124,10 +117,8 @@ public class Robot extends TimedRobot {
 
     camera.autoInit();
 
-    m_autoSelected = m_chooser.getSelected();
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
 
-    System.out.println("Auto selected: " + m_autoSelected);
     if (autoModeExecuter != null)
     {
       autoModeExecuter.stop();
@@ -166,12 +157,6 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
-  }
-
-
-  public void setInitialPose (Pose _initialPose)
-  {
-    System.out.println("InitialPose: " + _initialPose);
   }
   
   public void zeroAllSensors()

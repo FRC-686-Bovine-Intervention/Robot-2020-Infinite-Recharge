@@ -183,7 +183,7 @@ public class ControlPanel implements Loop {
         SmartDashboard.putNumber("ControlPanel/Blue",           detectedColor.blue);
         SmartDashboard.putNumber("ControlPanel/Confidence",     match.confidence*100);
         SmartDashboard.putString("ControlPanel/DetectedColor",  detectedColorEnum.name());
-        SmartDashboard.putNumber("ControlPanel/Proximity",      proximity);
+        //SmartDashboard.putNumber("ControlPanel/Proximity",      proximity);
     }
 
     public void rotationControl()

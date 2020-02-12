@@ -239,17 +239,7 @@ public class Shooter implements Loop {
 
     @Override
     public void onLoop() {
-        // SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
- 
-        // GoalEnum goal = GoalEnum.HIGH_GOAL;
-        // if (driverControls.getBoolean(DriverControlsEnum.TARGET_LOW))
-        // {
-        //     goal = GoalEnum.LOW_GOAL;
-        //     Limelight.getInstance().setPipeline(1);
-        // } else {
-        //     Limelight.getInstance().setPipeline(0);
-        // }
-
+        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
             //Checking the target status and determining its relative displacement:
             Vector2d targetDisplacement;
             if(camera.getIsTargetFound()){
@@ -450,11 +440,16 @@ public class Shooter implements Loop {
             detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
             detectedTargetPos = detectedTargetPos.rotate(getTurretAbsoluteAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
-        //Averaging:
-        if(targetPos == null){
-            //First time through
-            targetPos = detectedTargetPos;
-        } else {
+            //Averaging:
+            if(targetPos == null){
+                //First time through
+                targetPos = detectedTargetPos;
+            } else {
+                targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing);
+            }
+            return targetPos;
+        } 
+        else {
             return null; //In the event that the target can not be found
         }
     }
@@ -468,7 +463,7 @@ public class Shooter implements Loop {
            double motionRadius = robotSpeed.linearSpeed/robotSpeed.angularSpeed;
            double shooterMotionRadius = lawOfCosines(motionRadius, shooterPosFromRobot.length(), shooterPosFromRobot.angle(new Vector2d(-1,0)));
            double shooterVelMagnitude = robotSpeed.angularSpeed*shooterMotionRadius;
-           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0); //Shooter is considered '90' degrees as this is the direction of the robot
+           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0);
         } else {
             shooterVelocity = new Vector2d(robotSpeed.linearSpeed, 0);
         }

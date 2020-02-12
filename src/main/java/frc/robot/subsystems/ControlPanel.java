@@ -86,7 +86,7 @@ public class ControlPanel implements Loop {
 
     public static double kTableToWheel = 26;
     public static double kSensorToBumper = 3;
-    public static double kSliderZeroToBumer = 5;
+    public static double kSliderZeroToBumper = 5;
 
     public static enum ColorEnum
     {
@@ -311,7 +311,7 @@ public class ControlPanel implements Loop {
         /*
         Confusion
         */
-        sliderMaster.set(ControlMode.Position, Vector2d.radiansToDegrees*(kTableToWheel-(ultrasonic.update()+kSensorToBumper+kSliderZeroToBumer)));
+        sliderMaster.set(ControlMode.Position, Vector2d.radiansToDegrees*(kTableToWheel-(ultrasonic.update()+kSensorToBumper+kSliderZeroToBumper)));
     }
 
     public ColorEnum convertColor(ColorEnum color)

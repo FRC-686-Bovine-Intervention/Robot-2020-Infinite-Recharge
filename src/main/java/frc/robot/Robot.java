@@ -11,6 +11,9 @@ import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.loops.LoopController;
 import frc.robot.vision.VisionDriveAssistant;
+import frc.robot.loops.DriveLoop;
+import frc.robot.subsystems.*;
+
 
 
 public class Robot extends TimedRobot {
@@ -36,11 +39,12 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    // loopController.register(DriveLoop.getInstance());
-    // loopController.register(Intake.getInstance());
-    // loopController.register(Conveyor.getInstance());
-    // loopController.register(Shooter.getInstance());
-    // loopController.register(Lift.getInstance());
+    loopController.register(DriveLoop.getInstance());
+    loopController.register(Intake.getInstance());
+    loopController.register(ConveyorBelt.getInstance());
+    loopController.register(Shooter.getInstance());
+    loopController.register(Lift.getInstance());
+    loopController.register(ControlPanel.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );

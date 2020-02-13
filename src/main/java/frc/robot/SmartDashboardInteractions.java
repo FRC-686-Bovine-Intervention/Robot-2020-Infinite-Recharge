@@ -3,9 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeBase;
-import frc.robot.auto.modes.FieldDimensions;
-import frc.robot.auto.modes.MovementAuto;
-import frc.robot.auto.modes.StandStillMode;
+import frc.robot.auto.modes.*;
 import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsReversibleThrustmaster;
 import frc.robot.lib.joystick.DriverControlsThrustmaster;
@@ -69,6 +67,10 @@ public class SmartDashboardInteractions
         autoModeChooser = new SendableChooser<AutoModeOption>();
         autoModeChooser.setDefaultOption(AutoModeOption.MOVEMENT_AUTO.toString(), AutoModeOption.MOVEMENT_AUTO);
         autoModeChooser.addOption(AutoModeOption.MOVEMENT_AUTO.toString(), AutoModeOption.MOVEMENT_AUTO);
+        autoModeChooser.addOption(AutoModeOption.BALL_THEFT_AUTO.toString(), AutoModeOption.BALL_THEFT_AUTO);
+        autoModeChooser.setDefaultOption(AutoModeOption.SIX_BALL_AUTO.toString(), AutoModeOption.SIX_BALL_AUTO);
+        autoModeChooser.setDefaultOption(AutoModeOption.EIGHT_BALL_AUTO.toString(), AutoModeOption.EIGHT_BALL_AUTO);
+        autoModeChooser.setDefaultOption(AutoModeOption.SUMO_AUTO.toString(), AutoModeOption.SUMO_AUTO);
         SmartDashboard.putData("Auto Selection", autoModeChooser);
 
         // autoSideChooser = new SendableChooser<AutoSideSelection>();
@@ -164,7 +166,11 @@ public class SmartDashboardInteractions
     SendableChooser<AutoModeOption> autoModeChooser;
 
     enum AutoModeOption {
-        MOVEMENT_AUTO("Movement Auto");
+        MOVEMENT_AUTO("Movement Auto"),
+        BALL_THEFT_AUTO("Ball Theft Auto"),
+        SIX_BALL_AUTO("Movement Auto"),
+        EIGHT_BALL_AUTO("Movement Auto"),
+        SUMO_AUTO("Movement Auto");
 
         public final String name;
 
@@ -179,7 +185,14 @@ public class SmartDashboardInteractions
         switch (autoMode) {
         case MOVEMENT_AUTO:
             return new MovementAuto();
-
+        case BALL_THEFT_AUTO:
+            return new BallTheftAuto();
+        case SIX_BALL_AUTO:
+            return new SixBallAuto();
+        case EIGHT_BALL_AUTO:
+            return new EightBallAuto();
+        case SUMO_AUTO:
+            return new SumoAuto();
         default:
             System.out.println("ERROR: unexpected auto mode: " + autoMode);
             return new StandStillMode();

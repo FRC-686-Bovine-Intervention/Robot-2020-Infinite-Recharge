@@ -430,9 +430,10 @@ public class Shooter implements Loop {
 
 
     public Vector2d getTargetDisplacement(){
+        //Target Displacement angle is on the interval [-pi,pi]
         if(camera.getIsTargetFound()){
             double targetY = (targetHeight-cameraHeight)/Math.tan(camera.getTargetVerticalAngleRad()+cameraAngleRad);
-            double targetX = -targetY*Math.tan(camera.getTargetHorizontalAngleRad()); //Negative is to ensure that left of camera is positive from top-view
+            double targetX = targetY*Math.tan(-camera.getTargetHorizontalAngleRad()); //Negative is to ensure that left of camera is positive from top-view
             Vector2d detectedTargetPos = new Vector2d(targetX, targetY);
             SmartDashboard.putNumber("Shooter/Targetx", targetX);
             SmartDashboard.putNumber("Shooter/Targety", targetY);
@@ -459,15 +460,17 @@ public class Shooter implements Loop {
         double rightSpeed = DriveState.getInstance().getRightSpeedInchesPerSec();
         LinearAngularSpeed robotSpeed = Kinematics.forwardKinematics(leftSpeed, rightSpeed);
         if(robotSpeed.angularSpeed > Math.PI/6.0){
-           //Only use if angular speed is of some significant amount
-           double motionRadius = robotSpeed.linearSpeed/robotSpeed.angularSpeed;
-           double shooterMotionRadius = lawOfCosines(motionRadius, shooterPosFromRobot.length(), shooterPosFromRobot.angle(new Vector2d(-1,0)));
-           double shooterVelMagnitude = robotSpeed.angularSpeed*shooterMotionRadius;
-           shooterVelocity = new Vector2d(Math.copySign(shooterVelMagnitude, robotSpeed.linearSpeed),0);
+            //Only use if angular speed is of some significant amount
+            double motionRadius = Math.abs(robotSpeed.linearSpeed/robotSpeed.angularSpeed);
+            Vector2d robotRadius = robotSpeed.angularSpeed > 0 ? new Vector2d(0,motionRadius) : new Vector2d(0,-motionRadius);
+            Vector2d shooterRadius = shooterPosFromRobot.sub(robotRadius);
+            double shooterVelMag = Math.abs(shooterRadius.length()*robotSpeed.angularSpeed);
+            Vector2d shooterVelocity = new Vector2d(shooterVelMag,0);
+            double shooterVelAng = robotRadius.angle()+shooterRadius.angle();
+            shooterVelocity = robotSpeed.linearSpeed>0 ? (shooterVelocity.rotate(shooterVelAng)) : (shooterVelocity.rotate(shooterVelAng+Math.PI));
         } else {
             shooterVelocity = new Vector2d(robotSpeed.linearSpeed, 0);
         }
-
         return shooterVelocity;
     }
 

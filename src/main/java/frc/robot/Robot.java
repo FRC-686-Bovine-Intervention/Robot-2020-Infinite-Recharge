@@ -39,12 +39,11 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    loopController.register(DriveLoop.getInstance());
-    loopController.register(Intake.getInstance());
-    loopController.register(ConveyorBelt.getInstance());
-    loopController.register(Shooter.getInstance());
-    loopController.register(Lift.getInstance());
-    loopController.register(ControlPanel.getInstance());
+    // loopController.register(DriveLoop.getInstance());
+    // loopController.register(Intake.getInstance());
+    // loopController.register(ConveyorBelt.getInstance());
+    // loopController.register(Shooter.getInstance());
+    // loopController.register(Lift.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );

@@ -65,19 +65,13 @@ public class SmartDashboardInteractions
 
 
         autoModeChooser = new SendableChooser<AutoModeOption>();
-        autoModeChooser.setDefaultOption(AutoModeOption.MOVEMENT_AUTO.toString(), AutoModeOption.MOVEMENT_AUTO);
         autoModeChooser.addOption(AutoModeOption.MOVEMENT_AUTO.toString(), AutoModeOption.MOVEMENT_AUTO);
         autoModeChooser.addOption(AutoModeOption.BALL_THEFT_AUTO.toString(), AutoModeOption.BALL_THEFT_AUTO);
-        autoModeChooser.setDefaultOption(AutoModeOption.SIX_BALL_AUTO.toString(), AutoModeOption.SIX_BALL_AUTO);
-        autoModeChooser.setDefaultOption(AutoModeOption.EIGHT_BALL_AUTO.toString(), AutoModeOption.EIGHT_BALL_AUTO);
+        autoModeChooser.addOption(AutoModeOption.SIX_BALL_AUTO.toString(), AutoModeOption.SIX_BALL_AUTO);
+        autoModeChooser.addOption(AutoModeOption.EIGHT_BALL_AUTO.toString(), AutoModeOption.EIGHT_BALL_AUTO);
+        autoModeChooser.addOption(AutoModeOption.SUMO_AUTO.toString(), AutoModeOption.SUMO_AUTO);
         autoModeChooser.setDefaultOption(AutoModeOption.SUMO_AUTO.toString(), AutoModeOption.SUMO_AUTO);
         SmartDashboard.putData("Auto Selection", autoModeChooser);
-
-        // autoSideChooser = new SendableChooser<AutoSideSelection>();
-        // autoSideChooser.setDefaultOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
-        // autoSideChooser.addOption(AutoSideSelection.RIGHT_SIDE.toString(), AutoSideSelection.RIGHT_SIDE);
-        // autoSideChooser.addOption(AutoSideSelection.LEFT_SIDE.toString(), AutoSideSelection.LEFT_SIDE);
-        // SmartDashboard.putData("Side Selection", autoSideChooser);
 
         //Choosing start position
         startPoseChooser = new SendableChooser<StartPoseSelection>();
@@ -198,27 +192,6 @@ public class SmartDashboardInteractions
             return new StandStillMode();
         }
     }
-
-    // SendableChooser<AutoSideSelection> autoSideChooser;
-
-    // public enum AutoSideSelection {
-
-    //     // Left Looking at the goals
-    //     LEFT_SIDE("Left Side"), RIGHT_SIDE("Right Side");
-
-    //     public final String selection;
-
-    //     AutoSideSelection(final String selection) {
-    //         this.selection = selection;
-    //     }
-    // }
-
-    // public AutoSideSelection getAutoSide() {
-    //     final AutoSideSelection selection = (AutoSideSelection) autoSideChooser.getSelected();
-    //     return selection;
-    // }
-    
-
 
     SendableChooser<StartPoseSelection> startPoseChooser;
     public enum StartPoseSelection {

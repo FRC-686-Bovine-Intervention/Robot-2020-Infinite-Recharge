@@ -106,4 +106,10 @@ public class Lift extends Subsystem implements Loop {
         return !liftRetractionSensor.get();
     }
 
+
+    
+    public PTOTansmissionState getPTOState(){
+        return cPTOState;
+    }
+
 }

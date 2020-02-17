@@ -3,6 +3,8 @@ package frc.robot.lib.joystick;
 import frc.robot.command_status.DriveCommand;
 import frc.robot.lib.joystick.SteeringLib.DeadbandNonLinearity;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.subsystems.Lift;
+import frc.robot.subsystems.Lift.PTOTansmissionState;
 
 /**
  * Implements a simple arcade drive, where single stick is used for throttle and
@@ -27,7 +29,13 @@ public class TmArcadeDriveSteering extends SteeringBase
 	{      
         throttle = -stick.getAxis(Thrustmaster.kYAxis); 
         turn =     -stick.getAxis(Thrustmaster.kXAxis);
-		driveCmd = SteeringLib.arcadeDrive(throttle, turn, deadbandNonLinearity);
+        
+        //'Turning' is reversed for lift
+        if(Lift.getInstance().getPTOState() == PTOTansmissionState.LIFT_ENABLED){
+            driveCmd = SteeringLib.arcadeDrive(throttle, -turn, deadbandNonLinearity);
+        } else {
+            driveCmd = SteeringLib.arcadeDrive(throttle, turn, deadbandNonLinearity);
+        }
 		return driveCmd; 
     }   
     

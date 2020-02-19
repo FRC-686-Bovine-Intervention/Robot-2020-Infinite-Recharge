@@ -69,13 +69,13 @@ public class Shooter implements Loop {
 	public static double kQuadEncoderCodesPerRev = 1024;
 	public static double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
     public static double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
-    public static double kShooterGearRatio = 1.0/2.0;
-    public static double kTurretGearRatio = 20.0/1.0;
+    public static double kEncoderUnitsPerRevShooter = 10000;
+    public static double kEncoderUnitsPerRevHood = 10000;
     public static double kEncoderUnitsPerRevTurret = 49050;
-    public static double kHoodGearRatio = 1.0/1.0;
 
-    public final int kAllowableError = (int)rpmToEncoderUnitsPerFrame(10.0);
-    public final int kAllowableErrorPos = turretDegreesToEncoderUnits(0.5);
+    public final int kToleranceShooter = (int)rpmToEncoderUnitsPerFrame(10.0);
+    public final int kToleranceTurret = turretDegreesToEncoderUnits(0.5);
+    public final int kToleranceHood = hoodDegreesToEncoderUnits(1);
 
     public final int kPeakCurrentLimit = 50;
     public final int kPeakCurrentDuration = 200;
@@ -140,71 +140,71 @@ public class Shooter implements Loop {
 
     public Shooter() 
     {
-        // shooterMotor = new TalonSRX(Constants.kShooterTalonId);
-        // shooterSlave = new VictorSPX(Constants.kShooterSlaveId);
+        shooterMotor = new TalonSRX(Constants.kShooterTalonId);
+        shooterSlave = new VictorSPX(Constants.kShooterSlaveId);
 
-        // hoodMotor = new TalonSRX(Constants.kShooterHoodID);
+        hoodMotor = new TalonSRX(Constants.kShooterHoodID);
         turretMotor = new TalonSRX(Constants.kShooterTurretID);
 
-        // // Factory default hardware to prevent unexpected behavior
-        // shooterMotor.configFactoryDefault();
-        // hoodMotor.configFactoryDefault();
+        // Factory default hardware to prevent unexpected behavior
+        shooterMotor.configFactoryDefault();
+        hoodMotor.configFactoryDefault();
         turretMotor.configFactoryDefault();
 
-        // //=======================================
-        // //Shooter Motor Config
-        // //=======================================
-		// // configure encoder
-		// shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-		// shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
-        // shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
+        //=======================================
+        //Shooter Motor Config
+        //=======================================
+		// configure encoder
+		shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+        shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
 		
-		// // set relevant frame periods to be at least as fast as periodic rate
-		// shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		// set relevant frame periods to be at least as fast as periodic rate
+		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		shooterMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
 		
-		// // configure velocity loop PID 
-        // shooterMotor.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx); 
-        // shooterMotor.config_kF(kSlotIdxSpeed, kKfShooterV, Constants.kTalonTimeoutMs); 
-        // shooterMotor.config_kP(kSlotIdxSpeed, kKpShooterV, Constants.kTalonTimeoutMs); 
-        // shooterMotor.config_kI(kSlotIdxSpeed, kKiShooterV, Constants.kTalonTimeoutMs); 
-        // shooterMotor.config_kD(kSlotIdxSpeed, kKdShooterV, Constants.kTalonTimeoutMs);
-        // shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kAllowableError, Constants.kTalonTimeoutMs);
+		// configure velocity loop PID 
+        shooterMotor.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx); 
+        shooterMotor.config_kF(kSlotIdxSpeed, kKfShooterV, Constants.kTalonTimeoutMs); 
+        shooterMotor.config_kP(kSlotIdxSpeed, kKpShooterV, Constants.kTalonTimeoutMs); 
+        shooterMotor.config_kI(kSlotIdxSpeed, kKiShooterV, Constants.kTalonTimeoutMs); 
+        shooterMotor.config_kD(kSlotIdxSpeed, kKdShooterV, Constants.kTalonTimeoutMs);
+        shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kToleranceShooter, Constants.kTalonTimeoutMs);
         
-        // // current limits
-        // shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
-        // shooterMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
-        // shooterMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
-        // shooterMotor.enableCurrentLimit(true);
+        // current limits
+        shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        shooterMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        shooterMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        shooterMotor.enableCurrentLimit(true);
 
-        // // slave stuff
-        // shooterSlave.follow(shooterMotor);
-        // shooterSlave.setInverted(false);
+        // slave stuff
+        shooterSlave.follow(shooterMotor);
+        shooterSlave.setInverted(false);
 
-        //=======================================
-        //Hood Motor Config
-        //=======================================
-        // configure encoder
-		// hoodMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-		// hoodMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
-        // hoodMotor.setInverted(true);   // set to have green LEDs when driving forward
-        // hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        // =======================================
+        // Hood Motor Config
+        // =======================================
+        //configure encoder
+		hoodMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+		hoodMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+        hoodMotor.setInverted(true);   // set to have green LEDs when driving forward
+        hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		
-		// // set relevant frame periods to be at least as fast as periodic rate
-		// hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
-		// hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		// set relevant frame periods to be at least as fast as periodic rate
+		hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General,      (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0,    (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
+		hoodMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0,  (int)(1000 * Constants.kLoopDt), Constants.kTalonTimeoutMs);
 		
-		// // configure position loop PID 
-        // hoodMotor.selectProfileSlot(kSlotIdxPos, Constants.kTalonPidIdx); 
-        // hoodMotor.config_kF(kSlotIdxPos, kKfHoodPos, Constants.kTalonTimeoutMs); 
-        // hoodMotor.config_kP(kSlotIdxPos, kKpHoodPos, Constants.kTalonTimeoutMs); 
-        // hoodMotor.config_kI(kSlotIdxPos, kKiHoodPos, Constants.kTalonTimeoutMs); 
-        // hoodMotor.config_kD(kSlotIdxPos, kKdHoodPos, Constants.kTalonTimeoutMs);
-        // hoodMotor.configAllowableClosedloopError(kSlotIdxPos, kAllowableError, Constants.kTalonTimeoutMs);
+		// configure position loop PID 
+        hoodMotor.selectProfileSlot(kSlotIdxPos, Constants.kTalonPidIdx); 
+        hoodMotor.config_kF(kSlotIdxPos, kKfHoodPos, Constants.kTalonTimeoutMs); 
+        hoodMotor.config_kP(kSlotIdxPos, kKpHoodPos, Constants.kTalonTimeoutMs); 
+        hoodMotor.config_kI(kSlotIdxPos, kKiHoodPos, Constants.kTalonTimeoutMs); 
+        hoodMotor.config_kD(kSlotIdxPos, kKdHoodPos, Constants.kTalonTimeoutMs);
+        hoodMotor.configAllowableClosedloopError(kSlotIdxPos, kToleranceHood, Constants.kTalonTimeoutMs);
 
 
         //=======================================
@@ -228,7 +228,7 @@ public class Shooter implements Loop {
         turretMotor.config_kP(kSlotIdxPos, kKpTurretPos, Constants.kTalonTimeoutMs); 
         turretMotor.config_kI(kSlotIdxPos, kKiTurretPos, Constants.kTalonTimeoutMs); 
         turretMotor.config_kD(kSlotIdxPos, kKdTurretPos, Constants.kTalonTimeoutMs);
-        turretMotor.configAllowableClosedloopError(kSlotIdxPos, kAllowableErrorPos, Constants.kTalonTimeoutMs);
+        turretMotor.configAllowableClosedloopError(kSlotIdxPos, kToleranceTurret, Constants.kTalonTimeoutMs);
 
         // turretMotor.configMotionAcceleration(rpmToEncoderUnitsPerFrame(10));
         // turretMotor.configMotionCruiseVelocity(rpmToEncoderUnitsPerFrame(2));
@@ -287,7 +287,7 @@ public class Shooter implements Loop {
                 case IDLING:
                     //Hold everything in place
                     setShooterRPM(0);
-                    setTurretDeg(0);
+                    setTurretAbsDeg(0);
                     setHoodDeg(0);
                     break;
 
@@ -301,13 +301,13 @@ public class Shooter implements Loop {
                     setShooterRPM(0);
                     setHoodDeg(0);
                     double cHeading = pigeon.getHeadingDeg();
-                    setTurretDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
+                    setTurretAbsDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
                     break;
 
                 case TRACKING:
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    setTurretDeg(targetDisplacement.angle());
+                    setTurretAbsDeg(targetDisplacement.angle());
                     break;
 
                 case READJUSTING:
@@ -327,20 +327,27 @@ public class Shooter implements Loop {
                     //Controlling subsystems:
                     setShooterRPM(shooterRPM);
                     setHoodDeg(hoodDeg);
-                    setTurretDeg(turretDeg);
+                    setTurretAbsDeg(turretDeg);
                     break;
 
                 default:
                     break;
             }
         } else {
-            // setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
-            // setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
-            // SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
-            
+            //Debugging Code:
+            setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
+
             Vector2d targetDisplacement = getTargetDisplacement();
             targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
-            setTurretDeg(Math.toDegrees(targetDisplacement.angle()));
+            setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            //setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
+
+            setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+
+
+            //Feeding Smart Dashboard Info
+            SmartDashboard.putNumber("Shooter/SensedRPM", getShooterSensedRPM());
+            SmartDashboard.putNumber("Shooter/SensedHoodDeg", getHoodDeg());
             SmartDashboard.putNumber("Shooter/TurretRad", getTurretAngleRad());
             SmartDashboard.putNumber("Shooter/TurretRadAbs", getTurretAbsoluteAngleRad());
         }
@@ -378,15 +385,18 @@ public class Shooter implements Loop {
         hoodMotor.set(ControlMode.Position, encoderUnits);
     }
 
-    public void setTurretDeg(double degrees){
+    public void setTurretAbsDeg(double degrees){
         //Relies on proper intialization of turret, facing forwards
         double radians = Math.toRadians(degrees);
         double cAbsAngle = getTurretAbsoluteAngleRad();
         double cAngle = getTurretAngleRad();
 
         double targetRads = getAngleError(radians, cAbsAngle) + cAngle;
+        setTurretDeg(Math.toDegrees(targetRads));
+    }
 
-        double encoderUnits = turretDegreesToEncoderUnits(Math.toDegrees(targetRads));
+    public void setTurretDeg(double degree){
+        double encoderUnits = turretDegreesToEncoderUnits(degree);
         turretMotor.set(ControlMode.Position, encoderUnits);
     }
 
@@ -394,7 +404,7 @@ public class Shooter implements Loop {
     
     public double getSpeedError()
     {
-        double sensorRPM = encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity())*(1.0/kShooterGearRatio);
+        double sensorRPM = getShooterSensedRPM();
         double errorRPM = sensorRPM - targetRPM;
 
         SmartDashboard.putNumber("Shooter/SensorRPM", sensorRPM);
@@ -529,6 +539,16 @@ public class Shooter implements Loop {
         }
     }
 
+    public double getShooterSensedRPM(){
+        return (((double)shooterMotor.getSelectedSensorVelocity()/kEncoderUnitsPerRevShooter)*(60.0/kQuadEncoderStatusFramePeriod));
+    }
+
+    public double getHoodDeg(){
+        return (((double)hoodMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevHood)*(360.0));
+    }
+
+
+
 
 
     public double getAngleError(double targetRad, double actualRad){
@@ -573,7 +593,7 @@ public class Shooter implements Loop {
 
     //Shooter conversions:
     public static int shooterRPMToEncoderUnitsPerFrame(double _rpm){
-        return rpmToEncoderUnitsPerFrame(_rpm*kShooterGearRatio);
+        return (int)((_rpm*kEncoderUnitsPerRevShooter)*(kQuadEncoderStatusFramePeriod/60.0));
     }
 
     // Turret conversions:
@@ -583,7 +603,7 @@ public class Shooter implements Loop {
 
     //Hood conversions:
     public static int hoodDegreesToEncoderUnits(double _degrees){
-        return degreesToEncoderUnits(_degrees*kHoodGearRatio);
+        return (int)((_degrees/360.0)*kEncoderUnitsPerRevHood);
     }
 
 

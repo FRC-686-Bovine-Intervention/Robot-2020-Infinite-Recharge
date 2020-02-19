@@ -16,7 +16,7 @@ public class turretResetAction implements Action {
     @Override
     public void start() {
         shooter.onLoop();
-        shooter.setTurretDeg(turretAngle);
+        shooter.setTurretAbsDeg(turretAngle);
         finished = false;
     }
 

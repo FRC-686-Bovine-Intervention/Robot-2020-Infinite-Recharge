@@ -84,7 +84,7 @@ public class EightBallAuto extends AutoModeBase {
         }
         runAction(new FeedBallsAction(4));
         shooter.setShooterRPM(0.0);
-        shooter.setTurretDeg(0.0);
+        shooter.setTurretAbsDeg(0.0);
 
         //Moving To Center
         List<Action> prepareToCollectActions = new ArrayList<Action>();
@@ -116,7 +116,7 @@ public class EightBallAuto extends AutoModeBase {
         //Shooter was already spun up to speed, so no need to handle target loss if it were to occur
         runAction(new FeedBallsAction(6));
         shooter.setShooterRPM(0.0);
-        shooter.setTurretDeg(0.0);
+        shooter.setTurretAbsDeg(0.0);
 
         //Done!
     }

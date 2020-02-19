@@ -32,7 +32,7 @@ public class AimShooterAction implements Action {
 
     @Override
     public void start() {
-        shooter.setTurretDeg(backupAngle); //Start by looking in the general direction
+        shooter.setTurretAbsDeg(backupAngle); //Start by looking in the general direction
     }
 
     @Override
@@ -55,7 +55,7 @@ public class AimShooterAction implements Action {
             }
             //Otherwise...
             double correction = errorRad*pCorrection; //Assumes positive means leftwards correction
-            shooter.setTurretDeg(Math.toDegrees(cTurretAngle+correction)); //Adjusting turret
+            shooter.setTurretAbsDeg(Math.toDegrees(cTurretAngle+correction)); //Adjusting turret
         }
     }
 

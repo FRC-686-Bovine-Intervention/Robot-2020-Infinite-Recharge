@@ -78,6 +78,6 @@ public class BallTheftAuto extends AutoModeBase {
             runAction(new FeedBallsAction(3));
             shooter.setShooterRPM(0.0);
         }
-        shooter.setTurretDeg(0); //Done to ensure that it is initialized properly with start of tele
+        shooter.setTurretAbsDeg(0); //Done to ensure that it is initialized properly with start of tele
     }
 }

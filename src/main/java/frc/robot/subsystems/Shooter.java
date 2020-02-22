@@ -101,12 +101,14 @@ public class Shooter implements Loop {
     public Vector2d shooterVelocity;
 
 
+    public static double[] searchingIntervalDeg = {-90, 90};
+    public static double[] trackingIntervalDeg = {-170,170};
+    public static double[] shootingIntervalDeg = {-170,170};
 
-    public static double maxRotationTrackingDeg = 360;
-    public static double maxRotationDeg = 720;
-    public static double maxRotationTrackingRad = Math.toRadians(maxRotationTrackingDeg);
-    public static double maxRotationRad = Math.toRadians(maxRotationDeg);
-    public static double searchingVelocityRPM = 0.5; 
+    public static double searchingRangeDeg = Math.abs(searchingIntervalDeg[1]-searchingIntervalDeg[0]);
+    public static double trackingRangeDeg = Math.abs(trackingIntervalDeg[1]-trackingIntervalDeg[0]);
+    public static double shootingRangeDeg = Math.abs(shootingIntervalDeg[1]-shootingIntervalDeg[0]);
+    public static double searchingRPM = 0.25; 
 
 
     //Shooter Operational States
@@ -124,6 +126,9 @@ public class Shooter implements Loop {
     public double targetAdjustRads = 0; //Used in the Readjusting state in order to return to the original absolute position
     public static double adjustmentToleranceDeg = 10; //Allowable error when readjusting
     public static double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
+    public boolean readjustmentEnabled = true;
+
+    public double homeAngleRad = 0; //Used in tracking where zero is physically
 
 
     // Distance vs. RPM & Hood Pos Table
@@ -275,8 +280,20 @@ public class Shooter implements Loop {
                 cState = ShooterState.SHOOTING;
             }
 
+
+            //Checking if we can even readjust
+            switch(cState){
+                case SEARCHING:
+                    readjustmentEnabled = searchingRangeDeg > 360.0;
+                case TRACKING:
+                    readjustmentEnabled = trackingRangeDeg > 360.0;
+                case SHOOTING:
+                    readjustmentEnabled = shootingRangeDeg > 360.0;
+                default:
+                    readjustmentEnabled = false;
+            }
             //Checking turret rotation to ensure wires don't get wrapped up:
-            if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
+            if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING && readjustmentEnabled){
                 cState = ShooterState.READJUSTING;
                 targetAdjustRads = getTurretAbsoluteAngleRad();
             }
@@ -396,6 +413,9 @@ public class Shooter implements Loop {
     }
 
     public void setTurretDeg(double degree){
+        if(!readjustmentEnabled){
+            degree = limitTurretInputDeg(degree);
+        }
         double encoderUnits = turretDegreesToEncoderUnits(degree);
         turretMotor.set(ControlMode.Position, encoderUnits);
     }
@@ -514,7 +534,9 @@ public class Shooter implements Loop {
 
     public double getTurretAngleRad(){
         //Turret should be zeroed when facing front of robot
-        return (((double)turretMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevTurret)*(Math.PI*2.0));
+        double measuredRad = (((double)turretMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevTurret)*(Math.PI*2.0));
+        double adjustedRad = measuredRad - homeAngleRad; //Adjusting rads to physical position
+        return adjustedRad;
     }
 
     public double getTurretAbsoluteAngleRad(){
@@ -526,17 +548,36 @@ public class Shooter implements Loop {
     }
 
     public boolean checkTurretOutOfBounds(ShooterState state){
+        double cAngleDeg = Math.toDegrees(getTurretAngleRad());
         switch(state){
             case SEARCHING:
+                return cAngleDeg > searchingIntervalDeg[1] || cAngleDeg < searchingIntervalDeg[0];
             case TRACKING:
-                return (Math.abs(getTurretAngleRad()) > maxRotationTrackingRad);
+                return cAngleDeg > trackingIntervalDeg[1] || cAngleDeg < trackingIntervalDeg[0];
 
             case SHOOTING:
-                return (Math.abs(getTurretAngleRad())> maxRotationRad);
+                return cAngleDeg > shootingIntervalDeg[1] || cAngleDeg < shootingIntervalDeg[0];
 
             default:
-                return true;
+                return false;
         }
+    }
+
+    public double limitTurretInputDeg(double degrees){
+        switch(cState){
+            case SEARCHING:
+                return limitValue(degrees, searchingIntervalDeg[0], searchingIntervalDeg[1]);
+            case TRACKING:
+                return limitValue(degrees, trackingIntervalDeg[0], trackingIntervalDeg[1]);
+            case SHOOTING:
+                return limitValue(degrees, searchingIntervalDeg[0], searchingIntervalDeg[1]);
+            default:
+                return 0;
+        }
+    }
+
+    double limitValue(double value, double min, double max){
+        return value > max ? max : value < min ? min : value;
     }
 
     public double getShooterSensedRPM(){

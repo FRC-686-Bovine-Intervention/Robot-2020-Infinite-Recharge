@@ -293,9 +293,16 @@ public class Shooter implements Loop {
                     readjustmentEnabled = false;
             }
             //Checking turret rotation to ensure wires don't get wrapped up:
-            if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING && readjustmentEnabled){
-                cState = ShooterState.READJUSTING;
-                targetAdjustRads = getTurretAbsoluteAngleRad();
+            if(readjustmentEnabled){
+                if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
+                    cState = ShooterState.READJUSTING;
+                    targetAdjustRads = getTurretAbsoluteAngleRad();
+                }
+            } else {
+                if(checkTurretOutOfBounds(cState)){
+                    cState = ShooterState.WAITING;
+                    setTurretDeg(limitTurretInputDeg(getTurretAngleRad())); //Send it to the closest bound
+                }
             }
             
 
@@ -408,7 +415,7 @@ public class Shooter implements Loop {
         double cAbsAngle = getTurretAbsoluteAngleRad();
         double cAngle = getTurretAngleRad();
 
-        double targetRads = getAngleError(radians, cAbsAngle) + cAngle;
+        double targetRads = getAngleError(radians, cAbsAngle, true) + cAngle;
         setTurretDeg(Math.toDegrees(targetRads));
     }
 
@@ -554,10 +561,8 @@ public class Shooter implements Loop {
                 return cAngleDeg > searchingIntervalDeg[1] || cAngleDeg < searchingIntervalDeg[0];
             case TRACKING:
                 return cAngleDeg > trackingIntervalDeg[1] || cAngleDeg < trackingIntervalDeg[0];
-
             case SHOOTING:
                 return cAngleDeg > shootingIntervalDeg[1] || cAngleDeg < shootingIntervalDeg[0];
-
             default:
                 return false;
         }
@@ -592,18 +597,33 @@ public class Shooter implements Loop {
 
 
 
-    public double getAngleError(double targetRad, double actualRad){
+    public double getAngleError(double targetRad, double actualRad, boolean absoluteRad){
         //Positive output indicates CCW motion from actual to target
-        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad;
-        targetRad = targetRad < 0 ? targetRad+(Math.PI*2.0):targetRad;
+
+        // actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad;
+        // targetRad = targetRad < 0 ? targetRad+(Math.PI*2.0):targetRad;
+
+        //Getting positive values:
+        while(actualRad < 0 || targetRad < 0){
+            actualRad += Math.PI*2.0;
+            targetRad += Math.PI*2.0;
+        }
 
         actualRad -= targetRad; //Subtracting to make the target "0"
 
-        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad; //again readjusting to positive measures
-        
-        double distCW = -actualRad;
-        double distCCW = (Math.PI*2.0)-actualRad;
-        double output = Math.abs(distCW)<Math.abs(distCCW) ? distCW : distCCW;
+        double output;
+        if(absoluteRad){
+            while(actualRad < 0 || actualRad > Math.PI*2.0){
+                //Adjusting into bounds
+                actualRad = actualRad < 0 ? actualRad+Math.PI*2.0 : actualRad > Math.PI*2.0 ? actualRad-Math.PI*2.0 : actualRad;
+            }
+            
+            double distCW = -actualRad;
+            double distCCW = (Math.PI*2.0)-actualRad;
+            output = Math.abs(distCW)<Math.abs(distCCW) ? distCW : distCCW;
+        } else {
+            output = actualRad; //Raw difference
+        }
         return output;
     }
 

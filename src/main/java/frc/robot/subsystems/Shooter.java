@@ -130,6 +130,11 @@ public class Shooter implements Loop {
 
     public double homeAngleRad = 0; //Used in tracking where zero is physically
 
+    public double sweepStartTime = 0;
+    public double sweepPhaseAngleDeg = 0;
+    public static double sweepRangeDeg = 90;
+    public double[] sweepIntervalDeg = {-sweepRangeDeg/2.0,sweepRangeDeg/2.0};
+
 
     // Distance vs. RPM & Hood Pos Table
 
@@ -301,7 +306,7 @@ public class Shooter implements Loop {
             } else {
                 if(checkTurretOutOfBounds(cState)){
                     cState = ShooterState.WAITING;
-                    setTurretDeg(limitTurretInputDeg(getTurretAngleRad())); //Send it to the closest bound
+                    setTurretDeg(limitTurretInputDeg(Math.toDegrees(getTurretAngleRad()))); //Send it to the closest bound
                 }
             }
             
@@ -415,7 +420,22 @@ public class Shooter implements Loop {
         double cAbsAngle = getTurretAbsoluteAngleRad();
         double cAngle = getTurretAngleRad();
 
-        double targetRads = getAngleError(radians, cAbsAngle, true) + cAngle;
+        double adjustment = getAngleError(radians, cAbsAngle, true);
+        double targetRads = cAngle + adjustment;
+
+        double targetDegs = Math.toDegrees(targetRads);
+
+        //If the target goes out of bounds and the turret can not readjust:
+        if(!readjustmentEnabled && targetDegs != limitTurretInputDeg(targetDegs)){
+            //Determine if the turret can reach the target going the opposite direction
+            if(degrees == limitTurretInputDeg(degrees)){
+                //This indicates that the target does fall within the bounds and can be reached going in the opposite direction
+                targetRads += Math.copySign(Math.PI*2.0, -adjustment); //Rotate the target one rev in the opposite direction
+            } else {
+                //This indicates that the target falls outside of both bounds
+                targetRads = Math.toRadians(getClosestBound(targetDegs)); //Send it to the closest bound
+            }
+        }
         setTurretDeg(Math.toDegrees(targetRads));
     }
 
@@ -423,6 +443,7 @@ public class Shooter implements Loop {
         if(!readjustmentEnabled){
             degree = limitTurretInputDeg(degree);
         }
+        degree -= Math.toDegrees(homeAngleRad); //Adjusting for home position
         double encoderUnits = turretDegreesToEncoderUnits(degree);
         turretMotor.set(ControlMode.Position, encoderUnits);
     }
@@ -581,8 +602,18 @@ public class Shooter implements Loop {
         }
     }
 
-    double limitValue(double value, double min, double max){
-        return value > max ? max : value < min ? min : value;
+    private double getClosestBound(double targetDegree){
+        double targetRad = Math.toRadians(targetDegree);
+        switch(cState){
+            case SEARCHING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(searchingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(searchingIntervalDeg[1]), false)) ? searchingIntervalDeg[0] : searchingIntervalDeg[1];
+            case TRACKING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(trackingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(trackingIntervalDeg[1]), false)) ? trackingIntervalDeg[0] : trackingIntervalDeg[1];
+            case SHOOTING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(shootingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(shootingIntervalDeg[1]), false)) ? shootingIntervalDeg[0] : shootingIntervalDeg[1];
+            default:
+                return 0;
+        }
     }
 
     public double getShooterSensedRPM(){
@@ -596,6 +627,9 @@ public class Shooter implements Loop {
 
 
 
+    private double limitValue(double value, double min, double max){
+        return value > max ? max : value < min ? min : value;
+    }
 
     public double getAngleError(double targetRad, double actualRad, boolean absoluteRad){
         //Positive output indicates CCW motion from actual to target

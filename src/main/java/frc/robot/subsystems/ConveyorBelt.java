@@ -42,19 +42,19 @@ public class ConveyorBelt implements Loop
 
     
 	public static final double kKfSpeed = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-	public static double kKpSpeed = 5;	   
-    public static double kKiSpeed = 0.0;    
-    public static double kKdSpeed = 10000;	// to resolve any overshoot, start at 10*Kp 
+	public static final double kKpSpeed = 5;	   
+    public static final double kKiSpeed = 0.0;    
+    public static final double kKdSpeed = 10000;	// to resolve any overshoot, start at 10*Kp 
     
     public static final double kKfPos = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-    public static double kKpPos = 7; // was 7
-    public static double kKiPos = 0;
-    public static double kKdPos = 10000;
+    public static final double kKpPos = 7; // was 7
+    public static final double kKiPos = 0;
+    public static final double kKdPos = 10000;
 
-    public final double kKfVel = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-    public final double kKpVel = 0;
-    public final double kKiVel = 0;
-    public final double kKdVel = 0;
+    public static final double kKfVel = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+    public static final double kKpVel = 0;
+    public static final double kKiVel = 0;
+    public static final double kKdVel = 0;
     
     public static final double kQuadEncoderCodesPerRev = 1024;
 	public static final double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
@@ -76,8 +76,8 @@ public class ConveyorBelt implements Loop
 
     public boolean shooterChecked = false;
     public static final double inchesPerBall = 7;
-    public double targetPosDeg = 0;
-    public double posToleranceDeg = 10;
+    public double targetPosInches = 0;
+    public static final double posToleranceInches = 1;
 
     public ConveyorBelt() 
     {
@@ -146,7 +146,7 @@ public class ConveyorBelt implements Loop
 
             //Starts feeding when shooter has achieved a high enough speed
             if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && shooterChecked){
-                setSpeed(60);
+                setTowerSpeed(60);
             } else {
                 //Intentionally ignored while feeding in order to prevent jittering
                 shooterChecked = Shooter.getInstance().nearTarget(true);
@@ -162,47 +162,65 @@ public class ConveyorBelt implements Loop
     }
 
     
-    public void zeroSensors()
-    {
+    public void zeroSensors(){
     }
 
     public void stop()
     {
-        setSpeed(0);
+        setTowerSpeed(0);
     }
 
 
+    //================================
+    //Tower Controls/Functions:
+    //================================
 
-    public void setSpeed(double rpm){
+    public void setTowerSpeed(double rpm){
         conveyorMaster.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrame(rpm));
     }
 
-    public void setPosition(double inches){
+    public void setTowerPosition(double inches){
         //Moves the conveyor belt up or down some many inches. Positive moves it up
         conveyorMaster.set(ControlMode.MotionMagic, inchesToEncoderUnitsTower(inches) );
     }
 
     public void feed(int numberOfBalls){
-        targetPosDeg = getConveyorAngleDeg() + (inchesPerBall*(double)numberOfBalls);
-        setPosition(targetPosDeg);
+        targetPosInches = getConveyorPosInches() + (inchesPerBall*(double)numberOfBalls);
+        setTowerPosition(targetPosInches);
     }
 
 
     public boolean nearTarget(){
-        return (Math.abs(targetPosDeg-getConveyorAngleDeg())<=posToleranceDeg);
+        return (Math.abs(targetPosInches-getConveyorPosInches())<=posToleranceInches);
     }
 
-    public double getConveyorAngleDeg(){
-        return encoderUnitsToDegrees(conveyorMaster.getSelectedSensorPosition());
+    public double getConveyorPosInches(){
+        return encoderUnitsToInchesTower(conveyorMaster.getSelectedSensorPosition());
+    }
+
+    private double encoderUnitsToInchesTower(double _units){
+        return _units/kEncoderUnitsPerInchTower;
     }
 
     private int inchesToEncoderUnitsTower(double _inches){
         return (int)(_inches*kEncoderUnitsPerInchTower);
     }
 
-    private double encoderUnitsToInchesTower(double _units){
-        return _units/kEncoderUnitsPerInchTower;
+    private int inchesPerSecToEncoderUnitsPerFrame(double ){
+
     }
+
+
+
+    //=============================
+    //Hopper Controls/Functions
+    //=============================
+
+    private double 
+
+
+
+
 
 
 

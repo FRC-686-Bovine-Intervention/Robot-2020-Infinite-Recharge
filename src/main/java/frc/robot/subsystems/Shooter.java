@@ -87,28 +87,28 @@ public class Shooter implements Loop {
 
 
     //Variables for Target Location and Shooter build =======================
-    public static double targetHeight = 50.0; //Measured in inches
-    public static double cameraHeight = 0;
-    public static double shooterWheelRadius = 3.0; //Inches
-    public static double cameraAngleDeg = 0.0; //From the horizontal
-    public static double cameraAngleRad = Math.toRadians(cameraAngleDeg);
-    public static Vector2d shooterPosFromCam = new Vector2d(0, 0); //In inches. Front camera face is positive y. Measured from camera's center
-    public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
+    public static final double targetHeight = 50.0; //Measured in inches
+    public static final double cameraHeight = 0;
+    public static final double shooterWheelRadius = 3.0; //Inches
+    public static final double cameraAngleDeg = 0.0; //From the horizontal
+    public static final double cameraAngleRad = Math.toRadians(cameraAngleDeg);
+    public static final Vector2d shooterPosFromCam = new Vector2d(0, 0); //In inches. Front camera face is positive y. Measured from camera's center
+    public static final Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
 
     public Vector2d targetPos;
-    public static double targetSmoothing = (1.0/6.0);
+    public static final double targetSmoothing = (1.0/6.0);
 
     public Vector2d shooterVelocity;
 
 
-    public static double[] searchingIntervalDeg = {-90, 90};
-    public static double[] trackingIntervalDeg = {-170,170};
-    public static double[] shootingIntervalDeg = {-170,170};
+    public static final double[] searchingIntervalDeg = {-90, 90};
+    public static final double[] trackingIntervalDeg = {-170,170};
+    public static final double[] shootingIntervalDeg = {-170,170};
 
-    public static double searchingRangeDeg = Math.abs(searchingIntervalDeg[1]-searchingIntervalDeg[0]);
-    public static double trackingRangeDeg = Math.abs(trackingIntervalDeg[1]-trackingIntervalDeg[0]);
-    public static double shootingRangeDeg = Math.abs(shootingIntervalDeg[1]-shootingIntervalDeg[0]);
-    public static double searchingRPM = 0.25; 
+    public static final double trackingRangeDeg = Math.abs(trackingIntervalDeg[1]-trackingIntervalDeg[0]);
+    public static final double searchingRangeDeg = Math.abs(searchingIntervalDeg[1]-searchingIntervalDeg[0]);
+    public static final double shootingRangeDeg = Math.abs(shootingIntervalDeg[1]-shootingIntervalDeg[0]);
+    public static final double searchingRPM = 0.25; 
 
 
     //Shooter Operational States
@@ -119,20 +119,20 @@ public class Shooter implements Loop {
     
     //Target Tracking Variables
     public int targetLostCount = 0; //This is used to provide a buffer before searching for the target
-    public static int maxLostCountShooting = 5;
-    public static int maxLostCountTracking = 10;
+    public static final int maxLostCountShooting = 5;
+    public static final int maxLostCountTracking = 10;
     public Vector2d lastTargetPos = null;
 
     public double targetAdjustRads = 0; //Used in the Readjusting state in order to return to the original absolute position
-    public static double adjustmentToleranceDeg = 10; //Allowable error when readjusting
-    public static double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
+    public static final double adjustmentToleranceDeg = 10; //Allowable error when readjusting
+    public static final double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
     public boolean readjustmentEnabled = true;
 
     public double homeAngleRad = 0; //Used in tracking where zero is physically
 
     public double sweepStartTime = 0;
     public double sweepPhaseAngleDeg = 0;
-    public static double sweepRangeDeg = 90;
+    public static final double sweepRangeDeg = 90;
     public double[] sweepIntervalDeg = {-sweepRangeDeg/2.0,sweepRangeDeg/2.0};
 
 

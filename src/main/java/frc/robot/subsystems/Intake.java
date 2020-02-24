@@ -7,6 +7,7 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
@@ -27,7 +28,7 @@ public class Intake extends Subsystem implements Loop
     }
 
     public VictorSPX intakeMotor;
-    public Solenoid mainSolenoid, secondarySolenoid;
+    public Solenoid mainSolenoid1, mainSolenoid2, secondarySolenoid1, secondarySolenoid2;
 
 
     private int kSlotId = 0;
@@ -52,8 +53,16 @@ public class Intake extends Subsystem implements Loop
         intakeMotor = new VictorSPX(Constants.kIntakeTalonId);
         intakeMotor.configFactoryDefault();
         intakeMotor.setInverted(true);
-        mainSolenoid = new Solenoid(Constants.kPCMID, Constants.kMainSolenoidChannel);
-        secondarySolenoid = new Solenoid(Constants.kPCMID, Constants.kSecondarySolenoidChannel);
+
+        mainSolenoid1 = new Solenoid(Constants.kPCMID, Constants.kMainSolenoid1Channel);
+        mainSolenoid2 = new Solenoid(Constants.kPCMID, Constants.kMainSolenoid2Channel);
+        secondarySolenoid1 = new Solenoid(Constants.kPCMID, Constants.kSecondarySolenoid1Channel);
+        secondarySolenoid2 = new Solenoid(Constants.kPCMID, Constants.kSecondarySolenoid2Channel);
+
+        SmartDashboard.putBoolean("Intake/Debug", false);
+        SmartDashboard.putNumber("Intake/Debug/IntakePower", 0);
+        SmartDashboard.putBoolean("Intake/Debug/MainSolenoids", false);
+        SmartDashboard.putBoolean("Intake/Debug/SecondarySolenoids", false);
     }
     
 
@@ -65,31 +74,39 @@ public class Intake extends Subsystem implements Loop
 
     @Override
     public void onLoop() {
-        DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
+        if(!SmartDashboard.getBoolean("Lift/Debug", false)){
+            DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
 
-        if (driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND) && !toggleLastState)
-        {
-            if(currentState == IntakeState.STORED){
-                //Toggle to floor
-                extendToFloor();
-            } else if(currentState == IntakeState.GROUND){
-                //Toggle to stored
-                retract();
-            } else if(currentState == IntakeState.PLAYER_STATION){
-                //Jump to ground position
-                extendToPlayerStation();
+            if (driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND) && !toggleLastState){
+                if(currentState == IntakeState.STORED){
+                    //Toggle to floor
+                    extendToFloor();
+                } else if(currentState == IntakeState.GROUND){
+                    //Toggle to stored
+                    retract();
+                } else if(currentState == IntakeState.PLAYER_STATION){
+                    //Jump to ground position
+                    extendToPlayerStation();
+                }
             }
-        }
-        else if(driverControls.getBoolean(DriverControlsEnum.INTAKE_PLAYERSTATION))
-        {
-            extendToPlayerStation();
-        } 
-        else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
-        {
-            retract();
-        }
+            else if(driverControls.getBoolean(DriverControlsEnum.INTAKE_PLAYERSTATION))
+            {
+                extendToPlayerStation();
+            } 
+            else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
+            {
+                retract();
+            }
 
-        toggleLastState = driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND);
+            toggleLastState = driverControls.getBoolean(DriverControlsEnum.INTAKE_GROUND);
+        } else {
+            setPower(SmartDashboard.getNumber("Intake/Debug/IntakePower", 0));
+            mainSolenoid1.set(SmartDashboard.getBoolean("Intake/Debug/MainSolenoids", false));
+            mainSolenoid2.set(SmartDashboard.getBoolean("Intake/Debug/MainSolenoids", false));
+
+            secondarySolenoid1.set(SmartDashboard.getBoolean("Intake/Debug/SecondarySolenoids", false));
+            secondarySolenoid2.set(SmartDashboard.getBoolean("Intake/Debug/SecondarySolenoids", false));
+        }
     }
 
 
@@ -120,21 +137,27 @@ public class Intake extends Subsystem implements Loop
     public void extendToFloor(){
         currentState = IntakeState.GROUND;
         setPower(+Constants.kIntakeVoltage);
-        mainSolenoid.set(true);
-        secondarySolenoid.set(true);
+        mainSolenoid1.set(true);
+        mainSolenoid2.set(true);
+        secondarySolenoid1.set(true);
+        secondarySolenoid2.set(true);
     }
 
     public void extendToPlayerStation(){
         currentState = IntakeState.PLAYER_STATION;
         setPower(+Constants.kIntakeVoltage);
-        mainSolenoid.set(true);
-        secondarySolenoid.set(false);
+        mainSolenoid1.set(true);
+        mainSolenoid2.set(true);
+        secondarySolenoid1.set(false);
+        secondarySolenoid2.set(false);
     }
 
     public void retract(){
         currentState = IntakeState.STORED;
         setPower(0);
-        mainSolenoid.set(false);
-        secondarySolenoid.set(false);
+        mainSolenoid1.set(false);
+        mainSolenoid2.set(false);
+        secondarySolenoid1.set(false);
+        secondarySolenoid2.set(false);
     }
 }

@@ -60,6 +60,8 @@ public class ConveyorBelt implements Loop
 	public static final double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
     public static final double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
     public static final double kQuadEncoderUnitsPerDeg = kQuadEncoderUnitsPerRev/360;
+
+    public static final double kEncoderUnitsPerInchTower = 2000; //Determined from testing
     
     public static final double kCruiseVelocity = rpmsToEncoderUnitsPerFramePerSec(30.0);		// cruise below top speed; wasa 30
     public static final double timeToCruiseVelocity = 0.1;  // seconds
@@ -73,7 +75,7 @@ public class ConveyorBelt implements Loop
     public static final int kContinuousCurrentLimit = 20;
 
     public boolean shooterChecked = false;
-    public static double degreesPerBall = 360;
+    public static final double inchesPerBall = 7;
     public double targetPosDeg = 0;
     public double posToleranceDeg = 10;
 
@@ -123,6 +125,13 @@ public class ConveyorBelt implements Loop
         //Setting up slave
         conveyorSlave.follow(conveyorMaster);
         conveyorSlave.setInverted(false);
+
+
+        SmartDashboard.putBoolean("Conveyor/Debug", false);
+        SmartDashboard.putNumber("Conveyor/Debug/TowerRPM", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/TowerPos", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/LeftHopperRPM", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/RightHopperRPM", 0);
     }
 
     @Override
@@ -132,14 +141,18 @@ public class ConveyorBelt implements Loop
 
     @Override
     public void onLoop(){
-        SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+        if(!SmartDashboard.getBoolean("Conveyor/Debug", false)){
+            SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
 
-        //Starts feeding when shooter has achieved a high enough speed
-        if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && shooterChecked){
-            setSpeed(60);
+            //Starts feeding when shooter has achieved a high enough speed
+            if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && shooterChecked){
+                setSpeed(60);
+            } else {
+                //Intentionally ignored while feeding in order to prevent jittering
+                shooterChecked = Shooter.getInstance().nearTarget(true);
+            }
         } else {
-            //Intentionally ignored while feeding in order to prevent jittering
-            shooterChecked = Shooter.getInstance().nearTarget(true);
+
         }
     }
 
@@ -164,12 +177,13 @@ public class ConveyorBelt implements Loop
         conveyorMaster.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrame(rpm));
     }
 
-    public void setPosition(double deg){
-        conveyorMaster.set(ControlMode.Position, degreesToEncoderUnits(deg));
+    public void setPosition(double inches){
+        //Moves the conveyor belt up or down some many inches. Positive moves it up
+        conveyorMaster.set(ControlMode.MotionMagic, inchesToEncoderUnitsTower(inches) );
     }
 
     public void feed(int numberOfBalls){
-        targetPosDeg = getConveyorAngleDeg() + (degreesPerBall*(double)numberOfBalls);
+        targetPosDeg = getConveyorAngleDeg() + (inchesPerBall*(double)numberOfBalls);
         setPosition(targetPosDeg);
     }
 
@@ -180,6 +194,14 @@ public class ConveyorBelt implements Loop
 
     public double getConveyorAngleDeg(){
         return encoderUnitsToDegrees(conveyorMaster.getSelectedSensorPosition());
+    }
+
+    private int inchesToEncoderUnitsTower(double _inches){
+        return (int)(_inches*kEncoderUnitsPerInchTower);
+    }
+
+    private double encoderUnitsToInchesTower(double _units){
+        return _units/kEncoderUnitsPerInchTower;
     }
 
 

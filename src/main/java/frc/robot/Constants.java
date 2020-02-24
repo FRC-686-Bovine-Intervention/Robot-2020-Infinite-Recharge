@@ -45,13 +45,14 @@ public class Constants extends ConstantsBase {
     public static int kPanelMasterId =              41;
 
 
-    public static int kMainSolenoidChannel =        0;
-    public static int kSecondarySolenoidChannel =   1;
-    public static int kPTOSolenoidChannel =         2;
-    public static int kLiftLockSolenoidChannel =    3;
-    
-    public static int kLiftSensorChannel =          1010;
-    
+    public static int kMainSolenoid1Channel =       0;
+    public static int kMainSolenoid2Channel =       1;
+    public static int kSecondarySolenoid1Channel =  2;
+    public static int kSecondarySolenoid2Channel =  3;
+    public static int kPTOSolenoid1Channel =        4;
+    public static int kPTOSolenoid2Channel =        5;
+    public static int kLiftLockSolenoid1Channel =   6;
+    public static int kLiftLockSolenoid2Channel =   7;    
 
 
 

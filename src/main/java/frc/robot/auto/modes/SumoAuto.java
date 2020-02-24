@@ -34,7 +34,7 @@ public class SumoAuto extends AutoModeBase {
         }
         runAction(new FeedBallsAction(4));
         shooter.setShooterRPM(0.0);
-        shooter.setTurretDeg(0.0);
+        shooter.setTurretAbsDeg(0.0);
 
 
         //Drive off line and push teammate (distance, velocity, heading)

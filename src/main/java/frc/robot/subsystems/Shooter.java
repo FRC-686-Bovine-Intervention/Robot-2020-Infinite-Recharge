@@ -51,29 +51,31 @@ public class Shooter implements Loop {
     public final double kCalMaxEncoderPulsePer100ms = 33300;	// velocity at a max throttle (measured using Phoenix Tuner)
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
-	public final double kKfShooterV = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+	public final double kKfShooterV = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms; //0.03072071
 	public final double kKpShooterV = 0.03;	   
 	public final double kKdShooterV = 2.0625;	// to resolve any overshoot, start at 10*Kp 
     public final double kKiShooterV = 0.0;  
     
-    public final double kKfHoodPos = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+    public final double kKfHoodPos = 0.0;
 	public final double kKpHoodPos = 0.0;	   
 	public final double kKdHoodPos = 0.0;	
     public final double kKiHoodPos = 0.0;
     
-    public final double kKfTurretPos = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-	public final double kKpTurretPos = 0.0;	   
-	public final double kKdTurretPos = 0.0;
+    public final double kKfTurretPos = 0.0;
+	public final double kKpTurretPos = 6.4;   
+	public final double kKdTurretPos = 150.0;
 	public final double kKiTurretPos = 0.0; 
 
 	public static double kQuadEncoderCodesPerRev = 1024;
 	public static double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
     public static double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
-    public static double kShooterGearRatio = 1.0/2.0;
-    public static double kTurretGearRatio = 20.0/1.0;
-    public static double kHoodGearRatio = 1.0/1.0;
+    public static double kEncoderUnitsPerRevShooter = 10000;
+    public static double kEncoderUnitsPerRevHood = 10000;
+    public static double kEncoderUnitsPerRevTurret = 49050;
 
-    public final int kAllowableError = (int)rpmToEncoderUnitsPerFrame(10);
+    public final int kToleranceShooter = (int)rpmToEncoderUnitsPerFrame(10.0);
+    public final int kToleranceTurret = turretDegreesToEncoderUnits(0.5);
+    public final int kToleranceHood = hoodDegreesToEncoderUnits(1);
 
     public final int kPeakCurrentLimit = 50;
     public final int kPeakCurrentDuration = 200;
@@ -85,26 +87,28 @@ public class Shooter implements Loop {
 
 
     //Variables for Target Location and Shooter build =======================
-    public static double targetHeight = 18.75; //Measured in inches
+    public static double targetHeight = 50.0; //Measured in inches
     public static double cameraHeight = 0;
     public static double shooterWheelRadius = 3.0; //Inches
-    public static double cameraAngleDeg = 18; //From the horizontal
+    public static double cameraAngleDeg = 0.0; //From the horizontal
     public static double cameraAngleRad = Math.toRadians(cameraAngleDeg);
-    public static Vector2d shooterPosFromCam = new Vector2d(-1.5, -1.5); //In inches. Front camera face is positive y. Measured from camera's center
+    public static Vector2d shooterPosFromCam = new Vector2d(0, 0); //In inches. Front camera face is positive y. Measured from camera's center
     public static Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
 
     public Vector2d targetPos;
-    public static double targetSmoothing = (1.0/10.0);
+    public static double targetSmoothing = (1.0/6.0);
 
     public Vector2d shooterVelocity;
 
 
+    public static double[] searchingIntervalDeg = {-90, 90};
+    public static double[] trackingIntervalDeg = {-170,170};
+    public static double[] shootingIntervalDeg = {-170,170};
 
-    public static double maxRotationTrackingDeg = 360;
-    public static double maxRotationDeg = 720;
-    public static double maxRotationTrackingRad = Math.toRadians(maxRotationTrackingDeg);
-    public static double maxRotationRad = Math.toRadians(maxRotationDeg);
-    public static double searchingVelocityRPM = 0.5; 
+    public static double searchingRangeDeg = Math.abs(searchingIntervalDeg[1]-searchingIntervalDeg[0]);
+    public static double trackingRangeDeg = Math.abs(trackingIntervalDeg[1]-trackingIntervalDeg[0]);
+    public static double shootingRangeDeg = Math.abs(shootingIntervalDeg[1]-shootingIntervalDeg[0]);
+    public static double searchingRPM = 0.25; 
 
 
     //Shooter Operational States
@@ -122,6 +126,14 @@ public class Shooter implements Loop {
     public double targetAdjustRads = 0; //Used in the Readjusting state in order to return to the original absolute position
     public static double adjustmentToleranceDeg = 10; //Allowable error when readjusting
     public static double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
+    public boolean readjustmentEnabled = true;
+
+    public double homeAngleRad = 0; //Used in tracking where zero is physically
+
+    public double sweepStartTime = 0;
+    public double sweepPhaseAngleDeg = 0;
+    public static double sweepRangeDeg = 90;
+    public double[] sweepIntervalDeg = {-sweepRangeDeg/2.0,sweepRangeDeg/2.0};
 
 
     // Distance vs. RPM & Hood Pos Table
@@ -169,7 +181,7 @@ public class Shooter implements Loop {
         shooterMotor.config_kP(kSlotIdxSpeed, kKpShooterV, Constants.kTalonTimeoutMs); 
         shooterMotor.config_kI(kSlotIdxSpeed, kKiShooterV, Constants.kTalonTimeoutMs); 
         shooterMotor.config_kD(kSlotIdxSpeed, kKdShooterV, Constants.kTalonTimeoutMs);
-        shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kAllowableError, Constants.kTalonTimeoutMs);
+        shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kToleranceShooter, Constants.kTalonTimeoutMs);
         
         // current limits
         shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
@@ -181,10 +193,10 @@ public class Shooter implements Loop {
         shooterSlave.follow(shooterMotor);
         shooterSlave.setInverted(false);
 
-        //=======================================
-        //Hood Motor Config
-        //=======================================
-        // configure encoder
+        // =======================================
+        // Hood Motor Config
+        // =======================================
+        //configure encoder
 		hoodMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
 		hoodMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
         hoodMotor.setInverted(true);   // set to have green LEDs when driving forward
@@ -202,7 +214,7 @@ public class Shooter implements Loop {
         hoodMotor.config_kP(kSlotIdxPos, kKpHoodPos, Constants.kTalonTimeoutMs); 
         hoodMotor.config_kI(kSlotIdxPos, kKiHoodPos, Constants.kTalonTimeoutMs); 
         hoodMotor.config_kD(kSlotIdxPos, kKdHoodPos, Constants.kTalonTimeoutMs);
-        hoodMotor.configAllowableClosedloopError(kSlotIdxPos, kAllowableError, Constants.kTalonTimeoutMs);
+        hoodMotor.configAllowableClosedloopError(kSlotIdxPos, kToleranceHood, Constants.kTalonTimeoutMs);
 
 
         //=======================================
@@ -226,15 +238,18 @@ public class Shooter implements Loop {
         turretMotor.config_kP(kSlotIdxPos, kKpTurretPos, Constants.kTalonTimeoutMs); 
         turretMotor.config_kI(kSlotIdxPos, kKiTurretPos, Constants.kTalonTimeoutMs); 
         turretMotor.config_kD(kSlotIdxPos, kKdTurretPos, Constants.kTalonTimeoutMs);
-        turretMotor.configAllowableClosedloopError(kSlotIdxPos, kAllowableError, Constants.kTalonTimeoutMs);        
+        turretMotor.configAllowableClosedloopError(kSlotIdxPos, kToleranceTurret, Constants.kTalonTimeoutMs);
+
+        // turretMotor.configMotionAcceleration(rpmToEncoderUnitsPerFrame(10));
+        // turretMotor.configMotionCruiseVelocity(rpmToEncoderUnitsPerFrame(2));
     }
 
 
     //Loop Functions
     @Override
     public void onStart() {
-        stop();
-        zeroSensors();
+        //stop();
+        //zeroSensors();
     }
 
     @Override
@@ -270,10 +285,29 @@ public class Shooter implements Loop {
                 cState = ShooterState.SHOOTING;
             }
 
+
+            //Checking if we can even readjust
+            switch(cState){
+                case SEARCHING:
+                    readjustmentEnabled = searchingRangeDeg > 360.0;
+                case TRACKING:
+                    readjustmentEnabled = trackingRangeDeg > 360.0;
+                case SHOOTING:
+                    readjustmentEnabled = shootingRangeDeg > 360.0;
+                default:
+                    readjustmentEnabled = false;
+            }
             //Checking turret rotation to ensure wires don't get wrapped up:
-            if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
-                cState = ShooterState.READJUSTING;
-                targetAdjustRads = getTurretAbsoluteAngleRad();
+            if(readjustmentEnabled){
+                if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
+                    cState = ShooterState.READJUSTING;
+                    targetAdjustRads = getTurretAbsoluteAngleRad();
+                }
+            } else {
+                if(checkTurretOutOfBounds(cState)){
+                    cState = ShooterState.WAITING;
+                    setTurretDeg(limitTurretInputDeg(Math.toDegrees(getTurretAngleRad()))); //Send it to the closest bound
+                }
             }
             
 
@@ -282,7 +316,7 @@ public class Shooter implements Loop {
                 case IDLING:
                     //Hold everything in place
                     setShooterRPM(0);
-                    setTurretDeg(0);
+                    setTurretAbsDeg(0);
                     setHoodDeg(0);
                     break;
 
@@ -296,13 +330,13 @@ public class Shooter implements Loop {
                     setShooterRPM(0);
                     setHoodDeg(0);
                     double cHeading = pigeon.getHeadingDeg();
-                    setTurretDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
+                    setTurretAbsDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
                     break;
 
                 case TRACKING:
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    setTurretDeg(targetDisplacement.angle()-(Math.PI/2.0)); //pi/2 subtracted to account for turret 0 is forward while target 0 is to the left
+                    setTurretAbsDeg(targetDisplacement.angle());
                     break;
 
                 case READJUSTING:
@@ -322,22 +356,35 @@ public class Shooter implements Loop {
                     //Controlling subsystems:
                     setShooterRPM(shooterRPM);
                     setHoodDeg(hoodDeg);
-                    setTurretDeg(turretDeg);
+                    setTurretAbsDeg(turretDeg);
                     break;
 
                 default:
                     break;
             }
         } else {
-            setShooterRPM(SmartDashboard.getNumber("Shooter/RPM", 0));
-            setHoodDeg(SmartDashboard.getNumber("Shooter/HoodDegree", 0));
-            SmartDashboard.putNumber("Shooter/SensedRPM", encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity()));
+            //Debugging Code:
+            setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
+
+            Vector2d targetDisplacement = getTargetDisplacement();
+            targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
+            setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            //setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
+
+            setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+
+
+            //Feeding Smart Dashboard Info
+            SmartDashboard.putNumber("Shooter/SensedRPM", getShooterSensedRPM());
+            SmartDashboard.putNumber("Shooter/SensedHoodDeg", getHoodDeg());
+            SmartDashboard.putNumber("Shooter/TurretRad", getTurretAngleRad());
+            SmartDashboard.putNumber("Shooter/TurretRadAbs", getTurretAbsoluteAngleRad());
         }
     }
 
     @Override
     public void onStop() {
-        stop();
+        //stop();
     }
 
     public void stop()
@@ -367,23 +414,45 @@ public class Shooter implements Loop {
         hoodMotor.set(ControlMode.Position, encoderUnits);
     }
 
-    public void setTurretDeg(double degrees){
+    public void setTurretAbsDeg(double degrees){
         //Relies on proper intialization of turret, facing forwards
         double radians = Math.toRadians(degrees);
         double cAbsAngle = getTurretAbsoluteAngleRad();
         double cAngle = getTurretAngleRad();
 
-        double targetRads = getAngleError(radians, cAbsAngle) + cAngle;
+        double adjustment = getAngleError(radians, cAbsAngle, true);
+        double targetRads = cAngle + adjustment;
 
-        double encoderUnits = turretDegreesToEncoderUnits(Math.toDegrees(targetRads));
-        turretMotor.set(ControlMode.MotionMagic, encoderUnits);
+        double targetDegs = Math.toDegrees(targetRads);
+
+        //If the target goes out of bounds and the turret can not readjust:
+        if(!readjustmentEnabled && targetDegs != limitTurretInputDeg(targetDegs)){
+            //Determine if the turret can reach the target going the opposite direction
+            if(degrees == limitTurretInputDeg(degrees)){
+                //This indicates that the target does fall within the bounds and can be reached going in the opposite direction
+                targetRads += Math.copySign(Math.PI*2.0, -adjustment); //Rotate the target one rev in the opposite direction
+            } else {
+                //This indicates that the target falls outside of both bounds
+                targetRads = Math.toRadians(getClosestBound(targetDegs)); //Send it to the closest bound
+            }
+        }
+        setTurretDeg(Math.toDegrees(targetRads));
+    }
+
+    public void setTurretDeg(double degree){
+        if(!readjustmentEnabled){
+            degree = limitTurretInputDeg(degree);
+        }
+        degree -= Math.toDegrees(homeAngleRad); //Adjusting for home position
+        double encoderUnits = turretDegreesToEncoderUnits(degree);
+        turretMotor.set(ControlMode.Position, encoderUnits);
     }
 
 
     
     public double getSpeedError()
     {
-        double sensorRPM = encoderUnitsPerFrameToRPM(shooterMotor.getSelectedSensorVelocity())*(1.0/kShooterGearRatio);
+        double sensorRPM = getShooterSensedRPM();
         double errorRPM = sensorRPM - targetRPM;
 
         SmartDashboard.putNumber("Shooter/SensorRPM", sensorRPM);
@@ -438,6 +507,7 @@ public class Shooter implements Loop {
             SmartDashboard.putNumber("Shooter/Targetx", targetX);
             SmartDashboard.putNumber("Shooter/Targety", targetY);
             SmartDashboard.putNumber("Shooter/TargetDist", detectedTargetPos.length());
+            detectedTargetPos = detectedTargetPos.rotate(-Math.PI/2.0); //Forward is considered at 90 degrees when sensed but should be 0.
             detectedTargetPos = detectedTargetPos.sub(shooterPosFromCam); //Map the detected vector onto the shooter's center
             detectedTargetPos = detectedTargetPos.rotate(getTurretAbsoluteAngleRad()); //This is used to rotate it back to the robot's perspective which is used to ground our measurements
 
@@ -448,6 +518,7 @@ public class Shooter implements Loop {
             } else {
                 targetPos = targetPos.expAverage(detectedTargetPos, targetSmoothing);
             }
+            SmartDashboard.putNumber("Shooter/Angle", targetPos.angle());
             return targetPos;
         } 
         else {
@@ -491,7 +562,9 @@ public class Shooter implements Loop {
 
     public double getTurretAngleRad(){
         //Turret should be zeroed when facing front of robot
-        return ((double)turretMotor.getSelectedSensorPosition()/(double)kQuadEncoderCodesPerRev)*(2.0*Math.PI)*(1.0/kTurretGearRatio);
+        double measuredRad = (((double)turretMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevTurret)*(Math.PI*2.0));
+        double adjustedRad = measuredRad - homeAngleRad; //Adjusting rads to physical position
+        return adjustedRad;
     }
 
     public double getTurretAbsoluteAngleRad(){
@@ -503,33 +576,88 @@ public class Shooter implements Loop {
     }
 
     public boolean checkTurretOutOfBounds(ShooterState state){
+        double cAngleDeg = Math.toDegrees(getTurretAngleRad());
         switch(state){
             case SEARCHING:
+                return cAngleDeg > searchingIntervalDeg[1] || cAngleDeg < searchingIntervalDeg[0];
             case TRACKING:
-                return (Math.abs(getTurretAngleRad()) > maxRotationTrackingRad);
-
+                return cAngleDeg > trackingIntervalDeg[1] || cAngleDeg < trackingIntervalDeg[0];
             case SHOOTING:
-                return (Math.abs(getTurretAngleRad())> maxRotationRad);
-
+                return cAngleDeg > shootingIntervalDeg[1] || cAngleDeg < shootingIntervalDeg[0];
             default:
-                return true;
+                return false;
         }
+    }
+
+    public double limitTurretInputDeg(double degrees){
+        switch(cState){
+            case SEARCHING:
+                return limitValue(degrees, searchingIntervalDeg[0], searchingIntervalDeg[1]);
+            case TRACKING:
+                return limitValue(degrees, trackingIntervalDeg[0], trackingIntervalDeg[1]);
+            case SHOOTING:
+                return limitValue(degrees, searchingIntervalDeg[0], searchingIntervalDeg[1]);
+            default:
+                return 0;
+        }
+    }
+
+    private double getClosestBound(double targetDegree){
+        double targetRad = Math.toRadians(targetDegree);
+        switch(cState){
+            case SEARCHING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(searchingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(searchingIntervalDeg[1]), false)) ? searchingIntervalDeg[0] : searchingIntervalDeg[1];
+            case TRACKING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(trackingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(trackingIntervalDeg[1]), false)) ? trackingIntervalDeg[0] : trackingIntervalDeg[1];
+            case SHOOTING:
+                return Math.abs(getAngleError(targetRad, Math.toRadians(shootingIntervalDeg[0]), false)) < Math.abs(getAngleError(targetRad, Math.toRadians(shootingIntervalDeg[1]), false)) ? shootingIntervalDeg[0] : shootingIntervalDeg[1];
+            default:
+                return 0;
+        }
+    }
+
+    public double getShooterSensedRPM(){
+        return (((double)shooterMotor.getSelectedSensorVelocity()/kEncoderUnitsPerRevShooter)*(60.0/kQuadEncoderStatusFramePeriod));
+    }
+
+    public double getHoodDeg(){
+        return (((double)hoodMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevHood)*(360.0));
     }
 
 
 
-    public double getAngleError(double targetRad, double actualRad){
+
+    private double limitValue(double value, double min, double max){
+        return value > max ? max : value < min ? min : value;
+    }
+
+    public double getAngleError(double targetRad, double actualRad, boolean absoluteRad){
         //Positive output indicates CCW motion from actual to target
-        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad;
-        targetRad = targetRad < 0 ? targetRad+(Math.PI*2.0):targetRad;
+
+        // actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad;
+        // targetRad = targetRad < 0 ? targetRad+(Math.PI*2.0):targetRad;
+
+        //Getting positive values:
+        while(actualRad < 0 || targetRad < 0){
+            actualRad += Math.PI*2.0;
+            targetRad += Math.PI*2.0;
+        }
 
         actualRad -= targetRad; //Subtracting to make the target "0"
 
-        actualRad = actualRad < 0 ? actualRad+(Math.PI*2.0):actualRad; //again readjusting to positive measures
-        
-        double distCW = actualRad-(Math.PI*2.0);
-        double distCCW = actualRad;
-        double output = Math.abs(distCW)<Math.abs(distCCW) ? distCW : distCCW;
+        double output;
+        if(absoluteRad){
+            while(actualRad < 0 || actualRad > Math.PI*2.0){
+                //Adjusting into bounds
+                actualRad = actualRad < 0 ? actualRad+Math.PI*2.0 : actualRad > Math.PI*2.0 ? actualRad-Math.PI*2.0 : actualRad;
+            }
+            
+            double distCW = -actualRad;
+            double distCCW = (Math.PI*2.0)-actualRad;
+            output = Math.abs(distCW)<Math.abs(distCCW) ? distCW : distCCW;
+        } else {
+            output = actualRad; //Raw difference
+        }
         return output;
     }
 
@@ -560,17 +688,17 @@ public class Shooter implements Loop {
 
     //Shooter conversions:
     public static int shooterRPMToEncoderUnitsPerFrame(double _rpm){
-        return rpmToEncoderUnitsPerFrame(_rpm*kShooterGearRatio);
+        return (int)((_rpm*kEncoderUnitsPerRevShooter)*(kQuadEncoderStatusFramePeriod/60.0));
     }
 
     // Turret conversions:
     public static int turretDegreesToEncoderUnits(double _degrees){
-        return degreesToEncoderUnits(_degrees*kTurretGearRatio);
+        return (int)((_degrees/360.0)*kEncoderUnitsPerRevTurret);
     }
 
     //Hood conversions:
     public static int hoodDegreesToEncoderUnits(double _degrees){
-        return degreesToEncoderUnits(_degrees*kHoodGearRatio);
+        return (int)((_degrees/360.0)*kEncoderUnitsPerRevHood);
     }
 
 

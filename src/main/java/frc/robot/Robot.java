@@ -42,22 +42,19 @@ public class Robot extends TimedRobot {
     // loopController.register(DriveLoop.getInstance());
     // loopController.register(Intake.getInstance());
     // loopController.register(ConveyorBelt.getInstance());
-    // loopController.register(Shooter.getInstance());
+    loopController.register(Shooter.getInstance());
     // loopController.register(Lift.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
-    SmartDashboard.putNumber("Shooter/RPM", 0);
-    SmartDashboard.putNumber("Shooter/HoodDegree", 0);
-    SmartDashboard.putBoolean("Shooter/Debug", false);
+
+    SmartDashboard.putNumber("Shooter/Debug/SetShooterRPM", 0);
+    SmartDashboard.putNumber("Shooter/Debug/SetTurretDeg", 0);
+    SmartDashboard.putNumber("Shooter/Debug/SetHoodDeg", 0);
+
+    SmartDashboard.putBoolean("Shooter/Debug", true);
     SmartDashboard.putBoolean("Shooter/UpdatePID", false);
-    SmartDashboard.putNumber("Shooter/Debug/kP", 0);
-    SmartDashboard.putNumber("Shooter/Debug/I", 0);
-    SmartDashboard.putNumber("Shooter/Debug/kD", 0);
-    SmartDashboard.putNumber("Agitator/Degree", 0);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
-    SmartDashboard.putBoolean("Agitator/Debug", false);
-    SmartDashboard.putNumber("Shooter/TargetDist", 0);
     //controlPanel.setupColors();
 
     robotLogger = DataLogController.getRobotLogController();

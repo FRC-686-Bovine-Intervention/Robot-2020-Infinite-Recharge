@@ -16,7 +16,7 @@ public class setTurretAction implements Action {
     @Override
     public void start() {
         shooter.onLoop();
-        shooter.setTurretDeg(angle);
+        shooter.setTurretAbsDeg(angle);
         finished = false;
     }
 

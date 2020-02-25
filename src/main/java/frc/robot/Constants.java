@@ -35,9 +35,14 @@ public class Constants extends ConstantsBase {
     public static int kRightMotorSlave1TalonId =    12;
     public static int kLeftMotorMasterTalonId =     13;
     public static int kLeftMotorSlave1TalonId =     14;
+
     public static int kIntakeTalonId =              21;
     public static int kConveyorbeltMasterID =       22;
     public static int kConveyorbeltSlaveID =        23;
+    public static int kConveyorHopperRightID =      24;
+    public static int kConveyorHopperLeftId =       25;
+    public static int kConveyorKickerID=            26;
+
     public static int kShooterTalonId =             31;
     public static int kShooterSlaveId =             32;
     public static int kShooterTurretID =            33;
@@ -45,19 +50,27 @@ public class Constants extends ConstantsBase {
     public static int kPanelMasterId =              41;
 
 
-    public static int kMainSolenoidChannel =        0;
-    public static int kSecondarySolenoidChannel =   1;
-    public static int kPTOSolenoidChannel =         2;
-    public static int kLiftLockSolenoidChannel =    3;
-    
-    public static int kLiftSensorChannel =          1010;
-    
+    public static int kMainSolenoidFChannel =       0;
+    public static int kMainSolenoidRChannel =       1;
+    public static int kSecondarySolenoidFChannel =  2;
+    public static int kSecondarySolenoidRChannel =  3;
+    public static int kPTOSolenoid1Channel =        4;
+    public static int kPTOSolenoid2Channel =        5;
+    public static int kLiftLockSolenoid1Channel =   6;
+    public static int kLiftLockSolenoid2Channel =   7;    
 
 
 
 
-    public static double kIntakeVoltage = 0.5;
-    public static double kConveyorRPM = 30.0;
+    public static double kIntakePower = 0.5;
+    public static double kConveyorFeedIPS = 7; //Inches per sec, feed rate of the tower
+    public static double kConveyorBackupDist = 3;
+
+    public static double kLeftHopperPercent = 0.25;
+    public static double kRightHopperPercent = 0.35;
+    public static double kKickerProportion = 0.5; //a fraction of the speed of the shooter
+    public static double kHopperReversePercent = 0.25; //For both motors
+
 
 
 

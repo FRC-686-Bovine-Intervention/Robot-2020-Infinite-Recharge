@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.PIDBase.Tolerance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
+import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.loops.Loop;
 import frc.robot.subsystems.Shooter;
 import jdk.dynalink.linker.ConversionComparator;
@@ -20,8 +21,6 @@ import frc.robot.Constants;
 
 public class ConveyorBelt implements Loop
 {
-    public TalonSRX conveyorMaster;
-    public VictorSPX conveyorSlave;
 
 	// singleton class
     private static ConveyorBelt instance = null;
@@ -32,8 +31,11 @@ public class ConveyorBelt implements Loop
 		}
 		return instance;
     }
-	
 
+    public TalonSRX conveyorMaster, kickerMotor;
+    public VictorSPX conveyorSlave, leftHopperMotor, rightHopperMotor;
+
+	
     public static final int kSlotIdxSpeed = 0;
     public static final int kSlotIdxPos   = 1;
 
@@ -41,27 +43,30 @@ public class ConveyorBelt implements Loop
     public static final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
     
-	public static final double kKfSpeed = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-	public static double kKpSpeed = 5;	   
-    public static double kKiSpeed = 0.0;    
-    public static double kKdSpeed = 10000;	// to resolve any overshoot, start at 10*Kp 
+	public static final double kKfSpeedTower = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+	public static final double kKpSpeedTower = 5;	   
+    public static final double kKiSpeedTower = 0.0;    
+    public static final double kKdSpeedTower = 10000;	// to resolve any overshoot, start at 10*Kp 
     
-    public static final double kKfPos = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-    public static double kKpPos = 7; // was 7
-    public static double kKiPos = 0;
-    public static double kKdPos = 10000;
+    public static final double kKfPosTower = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+    public static final double kKpPosTower = 7; // was 7
+    public static final double kKiPosTower = 0;
+    public static final double kKdPosTower = 10000;
 
-    public final double kKfVel = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
-    public final double kKpVel = 0;
-    public final double kKiVel = 0;
-    public final double kKdVel = 0;
+    public static final double kKfSpeedKicker = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms;
+    public static final double kKpSpeedKicker = 0;
+    public static final double kKiSpeedKicker = 0;
+    public static final double kKdSpeedKicker = 0;
     
     public static final double kQuadEncoderCodesPerRev = 1024;
 	public static final double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
     public static final double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
     public static final double kQuadEncoderUnitsPerDeg = kQuadEncoderUnitsPerRev/360;
+
+    public static final double kEncoderUnitsPerInchTower = 2000; //Determined from testing
+    public static final double kEncoderUnitsPerRevKicker = 3000;
     
-    public static final double kCruiseVelocity = rpmsToEncoderUnitsPerFramePerSec(30.0);		// cruise below top speed; wasa 30
+    public static final double kCruiseVelocity = ipsToEncoderUnitsPerFrameTower(7.0);		// cruise below top speed; wasa 30
     public static final double timeToCruiseVelocity = 0.1;  // seconds
     public static final double kMaxAcceleration = kCruiseVelocity /timeToCruiseVelocity;
     
@@ -73,17 +78,25 @@ public class ConveyorBelt implements Loop
     public static final int kContinuousCurrentLimit = 20;
 
     public boolean shooterChecked = false;
-    public static double degreesPerBall = 360;
-    public double targetPosDeg = 0;
-    public double posToleranceDeg = 10;
+    public static final double inchesPerBall = 7;
+    public double targetPosInches = 0;
+    public static final double posToleranceInches = 1;
+
+    public RisingEdgeDetector shootDetector = new RisingEdgeDetector();
 
     public ConveyorBelt() 
     {
         conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
         conveyorSlave = new VictorSPX(Constants.kConveyorbeltSlaveID);
+        leftHopperMotor = new VictorSPX(Constants.kConveyorHopperLeftId);
+        rightHopperMotor = new VictorSPX(Constants.kConveyorHopperRightID);
+        kickerMotor = new TalonSRX(Constants.kConveyorKickerID);
 
         conveyorMaster.configFactoryDefault();
         conveyorSlave.configFactoryDefault();
+        leftHopperMotor.configFactoryDefault();
+        rightHopperMotor.configFactoryDefault();
+        kickerMotor.configFactoryDefault();
 
 
         conveyorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
@@ -97,17 +110,17 @@ public class ConveyorBelt implements Loop
 
         //Config for position PID:
         conveyorMaster.selectProfileSlot(kSlotIdxPos, Constants.kTalonPidIdx);
-        conveyorMaster.config_kF(kSlotIdxPos, kKfPos, Constants.kTalonPidIdx);
-        conveyorMaster.config_kP(kSlotIdxPos, kKpPos, Constants.kTalonPidIdx);
-        conveyorMaster.config_kI(kSlotIdxPos, kKiPos, Constants.kTalonPidIdx);
-        conveyorMaster.config_kD(kSlotIdxPos, kKdPos, Constants.kTalonPidIdx);
+        conveyorMaster.config_kF(kSlotIdxPos, kKfPosTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kP(kSlotIdxPos, kKpPosTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kI(kSlotIdxPos, kKiPosTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kD(kSlotIdxPos, kKdPosTower, Constants.kTalonPidIdx);
 
         //Config for velocity PID:
         conveyorMaster.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
-        conveyorMaster.config_kF(kSlotIdxPos, kKfVel, Constants.kTalonPidIdx);
-        conveyorMaster.config_kP(kSlotIdxPos, kKpVel, Constants.kTalonPidIdx);
-        conveyorMaster.config_kI(kSlotIdxPos, kKiVel, Constants.kTalonPidIdx);
-        conveyorMaster.config_kD(kSlotIdxPos, kKdVel, Constants.kTalonPidIdx);
+        conveyorMaster.config_kF(kSlotIdxSpeed, kKfSpeedTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kP(kSlotIdxSpeed, kKpSpeedTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kI(kSlotIdxSpeed, kKiSpeedTower, Constants.kTalonPidIdx);
+        conveyorMaster.config_kD(kSlotIdxSpeed, kKdSpeedTower, Constants.kTalonPidIdx);
 
         //Motion Magic magic
         conveyorMaster.configMotionCruiseVelocity((int)kCruiseVelocity);
@@ -123,6 +136,47 @@ public class ConveyorBelt implements Loop
         //Setting up slave
         conveyorSlave.follow(conveyorMaster);
         conveyorSlave.setInverted(false);
+
+
+        //===============
+        //Kicker Config:
+        //===============
+        kickerMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        kickerMotor.setSensorPhase(true);
+        kickerMotor.setInverted(false);
+
+        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+
+        //Config for velocity PID:
+        kickerMotor.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
+        kickerMotor.config_kF(kSlotIdxSpeed, kKfSpeedKicker, Constants.kTalonPidIdx);
+        kickerMotor.config_kP(kSlotIdxSpeed, kKpSpeedKicker, Constants.kTalonPidIdx);
+        kickerMotor.config_kI(kSlotIdxSpeed, kKiSpeedKicker, Constants.kTalonPidIdx);
+        kickerMotor.config_kD(kSlotIdxSpeed, kKdSpeedKicker, Constants.kTalonPidIdx);
+
+        //Current limits and stuff
+        kickerMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        kickerMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        kickerMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        kickerMotor.enableCurrentLimit(true);
+
+
+
+        SmartDashboard.putBoolean("Conveyor/Debug", false);
+        SmartDashboard.putNumber("Conveyor/Debug/SetTowerIPS", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/SetTowerPosInches", 0);
+
+        SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", 0);
+
+        SmartDashboard.putNumber("Conveyor/Debug/SetLeftHopperPercent", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/SetRightHopperPercent", 0);
+
+        SmartDashboard.putNumber("Conveyor/Debug/SetKickerRPM", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", 0);
     }
 
     @Override
@@ -132,14 +186,43 @@ public class ConveyorBelt implements Loop
 
     @Override
     public void onLoop(){
-        SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
+        if(!SmartDashboard.getBoolean("Conveyor/Debug", false)){
+            SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
 
-        //Starts feeding when shooter has achieved a high enough speed
-        if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && shooterChecked){
-            setSpeed(60);
+            if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
+                setTowerPosition(getTowerPosInches()-Constants.kConveyorBackupDist);
+            }
+
+            //Starts feeding when shooter has achieved a high enough speed
+            if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
+                if(!shooterChecked){
+                    shooterChecked = Shooter.getInstance().nearTarget(true);
+                } else {
+                    setTowerIPS(Constants.kConveyorFeedIPS);
+                }
+                setKickerRPM(Shooter.getInstance().getTargetRPM()*Constants.kKickerProportion);
+            } else {
+                setTowerIPS(0.0);
+                setKickerRPM(0.0);
+            }
         } else {
-            //Intentionally ignored while feeding in order to prevent jittering
-            shooterChecked = Shooter.getInstance().nearTarget(true);
+            //Favors velocity over position
+            if(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0) != 0){
+                setTowerIPS(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0));
+            } else {
+                setTowerPosition(SmartDashboard.getNumber("Conveyor/Debug/SetTowerPosInches", 0));
+            }
+
+            leftHopperMotor.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetLeftHopperPercent", 0));
+            rightHopperMotor.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetRightHopperPercent", 0));
+
+            setKickerRPM(SmartDashboard.getNumber("Conveyor/Debug/SetKickerRPM", 0));
+
+            
+            //Outputting Sensor Data:
+            SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", getTowerIPS());
+            SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", getTowerPosInches());
+            SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", getKickerSensedRPM());
         }
     }
 
@@ -149,38 +232,110 @@ public class ConveyorBelt implements Loop
     }
 
     
-    public void zeroSensors()
-    {
+    public void zeroSensors(){
     }
 
     public void stop()
     {
-        setSpeed(0);
+        setTowerIPS(0);
     }
 
 
+    //================================
+    //Tower Controls/Functions:
+    //================================
 
-    public void setSpeed(double rpm){
-        conveyorMaster.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrame(rpm));
+    public void setTowerIPS(double ips){
+        conveyorMaster.set(ControlMode.Velocity, ipsToEncoderUnitsPerFrameTower(ips));
     }
 
-    public void setPosition(double deg){
-        conveyorMaster.set(ControlMode.Position, degreesToEncoderUnits(deg));
+    public void setTowerPosition(double inches){
+        //Moves the conveyor belt up or down some many inches. Positive moves it up
+        conveyorMaster.set(ControlMode.MotionMagic, inchesToEncoderUnitsTower(inches) );
     }
 
     public void feed(int numberOfBalls){
-        targetPosDeg = getConveyorAngleDeg() + (degreesPerBall*(double)numberOfBalls);
-        setPosition(targetPosDeg);
+        targetPosInches = getTowerPosInches() + (inchesPerBall*(double)numberOfBalls);
+        setTowerPosition(targetPosInches);
     }
 
 
     public boolean nearTarget(){
-        return (Math.abs(targetPosDeg-getConveyorAngleDeg())<=posToleranceDeg);
+        return (Math.abs(targetPosInches-getTowerPosInches())<=posToleranceInches);
     }
 
-    public double getConveyorAngleDeg(){
-        return encoderUnitsToDegrees(conveyorMaster.getSelectedSensorPosition());
+    public double getTowerPosInches(){
+        return encoderUnitsToInchesTower(conveyorMaster.getSelectedSensorPosition());
     }
+
+    public double getTowerIPS(){
+        return encoderUnitsPerFrameToIPSTower(conveyorMaster.getSelectedSensorVelocity());
+    }
+
+
+
+    private static double encoderUnitsToInchesTower(double _units){
+        return _units/kEncoderUnitsPerInchTower;
+    }
+
+    private static int inchesToEncoderUnitsTower(double _inches){
+        return (int)(_inches*kEncoderUnitsPerInchTower);
+    }
+
+    private static int ipsToEncoderUnitsPerFrameTower(double _ips){
+        return (int)((_ips*kEncoderUnitsPerInchTower)*kQuadEncoderStatusFramePeriod);
+    }
+
+    private static double encoderUnitsPerFrameToIPSTower(int _UPF){
+        return (((double) _UPF/kEncoderUnitsPerInchTower)/kQuadEncoderStatusFramePeriod);
+    }
+
+
+
+    //=============================
+    //Hopper Controls/Functions
+    //=============================
+    public void runHopper(){
+        leftHopperMotor.set(ControlMode.PercentOutput, Constants.kLeftHopperPercent);
+        rightHopperMotor.set(ControlMode.PercentOutput, Constants.kRightHopperPercent);
+    }
+
+    public void stopHopper(){
+        leftHopperMotor.set(ControlMode.PercentOutput, 0.0);
+        rightHopperMotor.set(ControlMode.PercentOutput, 0.0);
+    }
+    
+    public void reverseHopper(){
+        leftHopperMotor.set(ControlMode.PercentOutput, -Constants.kHopperReversePercent);
+        rightHopperMotor.set(ControlMode.PercentOutput, -Constants.kHopperReversePercent);
+    }
+
+
+
+    //==================
+    //Kicker Controls
+    //==================
+
+    public void setKickerRPM(double RPM){
+        kickerMotor.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrameKicker(RPM));
+    }
+
+    public double getKickerSensedRPM(){
+        return encoderUnitsPerFrameToRPMKicker(kickerMotor.getSelectedSensorVelocity());
+    }
+
+
+    private static int rpmToEncoderUnitsPerFrameKicker(double _rpm){
+        return (int)((_rpm*kEncoderUnitsPerRevKicker)*(kQuadEncoderStatusFramePeriod/60.0));
+    }
+
+    private static double encoderUnitsPerFrameToRPMKicker(int _UPF){
+        return (((double) _UPF/kEncoderUnitsPerRevKicker)/kQuadEncoderStatusFramePeriod);
+    }
+
+
+
+
 
 
 

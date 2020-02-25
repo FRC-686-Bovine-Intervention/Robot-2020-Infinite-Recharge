@@ -470,6 +470,10 @@ public class Shooter implements Loop {
         }
     }
 
+    public double getTargetRPM(){
+        return targetRPM;
+    }
+
 
 
     //=======================================================

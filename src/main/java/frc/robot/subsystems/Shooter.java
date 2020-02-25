@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
@@ -35,8 +36,8 @@ public class Shooter implements Loop {
     //====================================================
     // Members
     //====================================================
-    public TalonSRX shooterMotor, hoodMotor, turretMotor;
-    public VictorSPX shooterSlave;
+    public TalonFX shooterMotor, shooterSlave;
+    public TalonSRX turretMotor, hoodMotor;
     public Limelight camera = Limelight.getInstance();
     public Pigeon pigeon = (Pigeon)Pigeon.getInstance();
     public double speed;
@@ -52,25 +53,25 @@ public class Shooter implements Loop {
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
 	public final double kKfShooterV = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms; //0.03072071
-	public final double kKpShooterV = 0.03;	   
-	public final double kKdShooterV = 2.0625;	// to resolve any overshoot, start at 10*Kp 
+	public final double kKpShooterV = 0.32;	   
+	public final double kKdShooterV = 3.2;	// to resolve any overshoot, start at 10*Kp 
     public final double kKiShooterV = 0.0;  
     
     public final double kKfHoodPos = 0.0;
-	public final double kKpHoodPos = 0.0;	   
-	public final double kKdHoodPos = 0.0;	
+	public final double kKpHoodPos = 10.24;	   
+	public final double kKdHoodPos = 32.0;	
     public final double kKiHoodPos = 0.0;
     
     public final double kKfTurretPos = 0.0;
-	public final double kKpTurretPos = 6.4;   
+	public final double kKpTurretPos = 5.0;   
 	public final double kKdTurretPos = 150.0;
 	public final double kKiTurretPos = 0.0; 
 
 	public static double kQuadEncoderCodesPerRev = 1024;
 	public static double kQuadEncoderUnitsPerRev = 4*kQuadEncoderCodesPerRev;
     public static double kQuadEncoderStatusFramePeriod = 0.100; // 100 ms
-    public static double kEncoderUnitsPerRevShooter = 10000;
-    public static double kEncoderUnitsPerRevHood = 10000;
+    public static double kEncoderUnitsPerRevShooter = 1540;
+    public static double kEncoderUnitsPerRevHood = 104424;
     public static double kEncoderUnitsPerRevTurret = 49050;
 
     public final int kToleranceShooter = (int)rpmToEncoderUnitsPerFrame(10.0);
@@ -109,6 +110,8 @@ public class Shooter implements Loop {
     public static double trackingRangeDeg = Math.abs(trackingIntervalDeg[1]-trackingIntervalDeg[0]);
     public static double shootingRangeDeg = Math.abs(shootingIntervalDeg[1]-shootingIntervalDeg[0]);
     public static double searchingRPM = 0.25; 
+
+    public static final double maxHoodDeg = 47.00; //Tested
 
 
     //Shooter Operational States
@@ -150,8 +153,8 @@ public class Shooter implements Loop {
 
     public Shooter() 
     {
-        shooterMotor = new TalonSRX(Constants.kShooterTalonId);
-        shooterSlave = new VictorSPX(Constants.kShooterSlaveId);
+        shooterMotor = new TalonFX(Constants.kShooterTalonId);
+        shooterSlave = new TalonFX(Constants.kShooterSlaveId);
 
         hoodMotor = new TalonSRX(Constants.kShooterHoodID);
         turretMotor = new TalonSRX(Constants.kShooterTurretID);
@@ -165,8 +168,8 @@ public class Shooter implements Loop {
         //Shooter Motor Config
         //=======================================
 		// configure encoder
-		shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-		shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
+		shooterMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, 1, Constants.kTalonTimeoutMs);
+        shooterMotor.setSensorPhase(false); // set so that positive motor input results in positive change in sensor value
         shooterMotor.setInverted(true);   // set to have green LEDs when driving forward
 		
 		// set relevant frame periods to be at least as fast as periodic rate
@@ -184,10 +187,10 @@ public class Shooter implements Loop {
         shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kToleranceShooter, Constants.kTalonTimeoutMs);
         
         // current limits
-        shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
-        shooterMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
-        shooterMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
-        shooterMotor.enableCurrentLimit(true);
+        // shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        // shooterMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        // shooterMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        // shooterMotor.enableCurrentLimit(true);
 
         // slave stuff
         shooterSlave.follow(shooterMotor);
@@ -366,10 +369,10 @@ public class Shooter implements Loop {
             //Debugging Code:
             setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
 
-            Vector2d targetDisplacement = getTargetDisplacement();
-            targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
-            setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
-            //setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
+            // Vector2d targetDisplacement = getTargetDisplacement();
+            // targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
+            // setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
 
             setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
 
@@ -410,6 +413,7 @@ public class Shooter implements Loop {
 
     public void setHoodDeg(double degree){
         //Relies on hood to be initialized properly
+        degree = degree < 0 ? degree = 0 : degree>maxHoodDeg ? degree = maxHoodDeg : degree;
         double encoderUnits = hoodDegreesToEncoderUnits(degree);
         hoodMotor.set(ControlMode.Position, encoderUnits);
     }

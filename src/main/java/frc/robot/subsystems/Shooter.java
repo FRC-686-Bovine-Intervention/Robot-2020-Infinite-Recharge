@@ -53,8 +53,8 @@ public class Shooter implements Loop {
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
 	public final double kKfShooterV = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms; //0.03072071
-	public final double kKpShooterV = 0.32;	   
-	public final double kKdShooterV = 3.2;	// to resolve any overshoot, start at 10*Kp 
+	public final double kKpShooterV = 0.25;	   
+	public final double kKdShooterV = 24.0;	// to resolve any overshoot, start at 10*Kp 
     public final double kKiShooterV = 0.0;  
     
     public final double kKfHoodPos = 0.0;
@@ -88,10 +88,10 @@ public class Shooter implements Loop {
 
 
     //Variables for Target Location and Shooter build =======================
-    public static final double targetHeight = 50.0; //Measured in inches
-    public static final double cameraHeight = 0;
+    public static final double targetHeight = 99.0; //Measured in inches
+    public static final double cameraHeight = 41.0;
     public static final double shooterWheelRadius = 3.0; //Inches
-    public static final double cameraAngleDeg = 0.0; //From the horizontal
+    public static final double cameraAngleDeg = 25.0; //From the horizontal
     public static final double cameraAngleRad = Math.toRadians(cameraAngleDeg);
     public static final Vector2d shooterPosFromCam = new Vector2d(0, 0); //In inches. Front camera face is positive y. Measured from camera's center
     public static final Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
@@ -142,12 +142,11 @@ public class Shooter implements Loop {
     // Distance vs. RPM & Hood Pos Table
 
     public double[][] dataTable = {
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1}
+        {24,3600,0},
+        {49,2750,22},
+        {105,3000,35},
+        {189,4000,45},
+        {265,4750,47},
     };
 
 
@@ -185,6 +184,7 @@ public class Shooter implements Loop {
         shooterMotor.config_kI(kSlotIdxSpeed, kKiShooterV, Constants.kTalonTimeoutMs); 
         shooterMotor.config_kD(kSlotIdxSpeed, kKdShooterV, Constants.kTalonTimeoutMs);
         shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kToleranceShooter, Constants.kTalonTimeoutMs);
+        shooterMotor.configClosedloopRamp(2, Constants.kTalonTimeoutMs);
         
         // current limits
         // shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
@@ -367,14 +367,36 @@ public class Shooter implements Loop {
             }
         } else {
             //Debugging Code:
-            setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
+            // setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
 
             // Vector2d targetDisplacement = getTargetDisplacement();
             // targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
-            // setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
-            setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
+            // double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+            // if(Math.abs(error)>=Math.toRadians(0.5)){
+            //     setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            // }
+            // setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
 
-            setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+            // setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+
+            Vector2d targetDisplacement = getTargetDisplacement();
+            if(targetDisplacement != null){
+
+                int keyL = getLinear(targetDisplacement.length(), dataTable);
+                double nominalSpeed = handleLinear(targetDisplacement.length(), dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
+
+                //double ballVelocity = getTargetBallVelMag(targetDisplacement.length());
+                double hoodDeg = calcHoodPosition(targetDisplacement.length());
+
+                //Controlling subsystems:
+                setShooterRPM(nominalSpeed);
+                setHoodDeg(hoodDeg);
+
+                double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+                if(Math.abs(error)>=Math.toRadians(0.5)){
+                    setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+                }
+            }
 
 
             //Feeding Smart Dashboard Info

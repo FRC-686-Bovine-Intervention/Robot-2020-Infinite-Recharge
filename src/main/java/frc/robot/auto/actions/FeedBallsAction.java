@@ -19,7 +19,7 @@ public class FeedBallsAction implements Action {
 
     @Override
     public void start() {
-        conveyorBelt.setPosition(numberOfBalls);
+        conveyorBelt.feed(numberOfBalls);
     }
 
     @Override

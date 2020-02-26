@@ -157,6 +157,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
+    //Calibrating shooter!
+    Shooter.getInstance().calibrate();
   }
   
   public void zeroAllSensors()

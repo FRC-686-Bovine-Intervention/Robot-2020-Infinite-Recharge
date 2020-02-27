@@ -7,6 +7,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.command_status.DriveState;
@@ -18,6 +19,7 @@ import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.Kinematics;
+import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
 import frc.robot.lib.util.Vector2d;
 import frc.robot.loops.Loop;
@@ -40,6 +42,7 @@ public class Shooter implements Loop {
     public TalonSRX turretMotor, hoodMotor;
     public Limelight camera = Limelight.getInstance();
     public Pigeon pigeon = (Pigeon)Pigeon.getInstance();
+    public DigitalInput magnetSensor;
     public double speed;
 
     //====================================================
@@ -53,8 +56,8 @@ public class Shooter implements Loop {
     public final double kCalMaxPercentOutput 		= 1.0;	// percent output of motor at above throttle (using Phoenix Tuner)
 
 	public final double kKfShooterV = kCalMaxPercentOutput * 1023.0 / kCalMaxEncoderPulsePer100ms; //0.03072071
-	public final double kKpShooterV = 0.32;	   
-	public final double kKdShooterV = 3.2;	// to resolve any overshoot, start at 10*Kp 
+	public final double kKpShooterV = 0.25;	   
+	public final double kKdShooterV = 24.0;	// to resolve any overshoot, start at 10*Kp 
     public final double kKiShooterV = 0.0;  
     
     public final double kKfHoodPos = 0.0;
@@ -76,7 +79,7 @@ public class Shooter implements Loop {
 
     public final int kToleranceShooter = (int)rpmToEncoderUnitsPerFrame(10.0);
     public final int kToleranceTurret = turretDegreesToEncoderUnits(0.5);
-    public final int kToleranceHood = hoodDegreesToEncoderUnits(1);
+    public final int kToleranceHood = hoodDegreesToEncoderUnits(0.25);
 
     public final int kPeakCurrentLimit = 50;
     public final int kPeakCurrentDuration = 200;
@@ -88,10 +91,10 @@ public class Shooter implements Loop {
 
 
     //Variables for Target Location and Shooter build =======================
-    public static final double targetHeight = 50.0; //Measured in inches
-    public static final double cameraHeight = 0;
+    public static final double targetHeight = 99.0; //Measured in inches
+    public static final double cameraHeight = 41.0;
     public static final double shooterWheelRadius = 3.0; //Inches
-    public static final double cameraAngleDeg = 0.0; //From the horizontal
+    public static final double cameraAngleDeg = 25.0; //From the horizontal
     public static final double cameraAngleRad = Math.toRadians(cameraAngleDeg);
     public static final Vector2d shooterPosFromCam = new Vector2d(0, 0); //In inches. Front camera face is positive y. Measured from camera's center
     public static final Vector2d shooterPosFromRobot = new Vector2d(-12, -12); // In inches. Front of robot is positive y. Measured from robot center
@@ -131,7 +134,8 @@ public class Shooter implements Loop {
     public static final double adjustmentToleranceRad = Math.toRadians(adjustmentToleranceDeg);
     public boolean readjustmentEnabled = true;
 
-    public double homeAngleRad = 0; //Used in tracking where zero is physically
+    public double homeAngleRadTurret = 0; //Used in tracking where zero is physically
+    public double homeAngleDegHood = 0;
 
     public double sweepStartTime = 0;
     public double sweepPhaseAngleDeg = 0;
@@ -142,13 +146,26 @@ public class Shooter implements Loop {
     // Distance vs. RPM & Hood Pos Table
 
     public double[][] dataTable = {
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1},
-        {1,1,1}
+        {24,3600,0},
+        {49,2750,22},
+        {105,3000,35},
+        {189,4000,45},
+        {265,4750,47},
     };
+
+    //=================================
+    //Test Mode Calibration Variables:
+    private boolean turretCalibrated = false, hoodCalibrated = false, allCalibrated = false;
+    private RisingEdgeDetector turretMagnetDetector = new RisingEdgeDetector();
+    private RisingEdgeDetector hoodCurrentDetector = new RisingEdgeDetector();
+    private static final double hoodThresholdCurrent = 6.5;
+    private double hoodLastPos = 10000;
+    private double hoodLoopCount = 0;
+    private static final double hoodCalibrationToleranceDeg = .1;
+    private static final double turretMagnetAngleDeg = Math.toDegrees(-3.0); //This is the what turret would output when lined up with magnet and calibrated properly
+
+
+
 
 
     public Shooter() 
@@ -185,6 +202,7 @@ public class Shooter implements Loop {
         shooterMotor.config_kI(kSlotIdxSpeed, kKiShooterV, Constants.kTalonTimeoutMs); 
         shooterMotor.config_kD(kSlotIdxSpeed, kKdShooterV, Constants.kTalonTimeoutMs);
         shooterMotor.configAllowableClosedloopError(kSlotIdxSpeed, kToleranceShooter, Constants.kTalonTimeoutMs);
+        shooterMotor.configClosedloopRamp(2, Constants.kTalonTimeoutMs);
         
         // current limits
         // shooterMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
@@ -245,6 +263,8 @@ public class Shooter implements Loop {
 
         // turretMotor.configMotionAcceleration(rpmToEncoderUnitsPerFrame(10));
         // turretMotor.configMotionCruiseVelocity(rpmToEncoderUnitsPerFrame(2));
+
+        magnetSensor = new DigitalInput(Constants.kTurretHallEffectChannel);
     }
 
 
@@ -252,7 +272,6 @@ public class Shooter implements Loop {
     @Override
     public void onStart() {
         //stop();
-        //zeroSensors();
     }
 
     @Override
@@ -350,16 +369,35 @@ public class Shooter implements Loop {
                     break;    
 
                 case SHOOTING:
-                    Vector2d ballVelocity = calcBallVelocity(targetDisplacement); //This is the target velocity of the ball immediately after leaving the robot
-                    double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
-                    
+                    //Code that actually works:
+                    int keyL = getLinear(targetDisplacement.length(), dataTable);
+                    double nominalSpeed = handleLinear(targetDisplacement.length(), dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
+
+                    //double ballVelocity = getTargetBallVelMag(targetDisplacement.length());
                     double hoodDeg = calcHoodPosition(targetDisplacement.length());
-                    double turretDeg = Math.toDegrees(ballVelocity.angle());
 
                     //Controlling subsystems:
-                    setShooterRPM(shooterRPM);
+                    setShooterRPM(nominalSpeed);
                     setHoodDeg(hoodDeg);
-                    setTurretAbsDeg(turretDeg);
+
+                    double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+                    if(Math.abs(error)>=Math.toRadians(0.5)){
+                        setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+                    }
+
+
+                    //Fancy Code:
+
+                    // Vector2d ballVelocity = calcBallVelocity(targetDisplacement); //This is the target velocity of the ball immediately after leaving the robot
+                    // double shooterRPM = (2*ballVelocity.length()/shooterWheelRadius)*(30.0/Math.PI); //Determine RPM of shooter from new target velocity of ball
+                    
+                    // double hoodDeg = calcHoodPosition(targetDisplacement.length());
+                    // double turretDeg = Math.toDegrees(ballVelocity.angle());
+
+                    // //Controlling subsystems:
+                    // setShooterRPM(shooterRPM);
+                    // setHoodDeg(hoodDeg);
+                    // setTurretAbsDeg(turretDeg);
                     break;
 
                 default:
@@ -367,14 +405,43 @@ public class Shooter implements Loop {
             }
         } else {
             //Debugging Code:
+
+            //Manual controls:
             setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
 
-            // Vector2d targetDisplacement = getTargetDisplacement();
-            // targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
-            // setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            Vector2d targetDisplacement = getTargetDisplacement();
+            targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
+            double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+            // if(Math.abs(error)>=Math.toRadians(0.5)){
+            //     setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            // }
             setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
 
             setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+
+            SmartDashboard.putBoolean("Shooter/Debug/HallEffectOutput", magnetSensor.get());
+
+
+            //For testing auto-shooting:
+
+            // Vector2d targetDisplacement = getTargetDisplacement();
+            // if(targetDisplacement != null){
+
+            //     int keyL = getLinear(targetDisplacement.length(), dataTable);
+            //     double nominalSpeed = handleLinear(targetDisplacement.length(), dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
+
+            //     //double ballVelocity = getTargetBallVelMag(targetDisplacement.length());
+            //     double hoodDeg = calcHoodPosition(targetDisplacement.length());
+
+            //     //Controlling subsystems:
+            //     setShooterRPM(nominalSpeed);
+            //     setHoodDeg(hoodDeg);
+
+            //     double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+            //     if(Math.abs(error)>=Math.toRadians(0.5)){
+            //         setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            //     }
+            // }
 
 
             //Feeding Smart Dashboard Info
@@ -396,8 +463,8 @@ public class Shooter implements Loop {
     }
 
     public void zeroSensors(){
-        hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-        turretMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        // hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        // turretMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
     }
 
 
@@ -414,6 +481,7 @@ public class Shooter implements Loop {
     public void setHoodDeg(double degree){
         //Relies on hood to be initialized properly
         degree = degree < 0 ? degree = 0 : degree>maxHoodDeg ? degree = maxHoodDeg : degree;
+        degree += homeAngleDegHood;
         double encoderUnits = hoodDegreesToEncoderUnits(degree);
         hoodMotor.set(ControlMode.Position, encoderUnits);
     }
@@ -447,7 +515,7 @@ public class Shooter implements Loop {
         if(!readjustmentEnabled){
             degree = limitTurretInputDeg(degree);
         }
-        degree -= Math.toDegrees(homeAngleRad); //Adjusting for home position
+        degree += Math.toDegrees(homeAngleRadTurret); //Adjusting for home position
         double encoderUnits = turretDegreesToEncoderUnits(degree);
         turretMotor.set(ControlMode.Position, encoderUnits);
     }
@@ -571,7 +639,7 @@ public class Shooter implements Loop {
     public double getTurretAngleRad(){
         //Turret should be zeroed when facing front of robot
         double measuredRad = (((double)turretMotor.getSelectedSensorPosition()/kEncoderUnitsPerRevTurret)*(Math.PI*2.0));
-        double adjustedRad = measuredRad - homeAngleRad; //Adjusting rads to physical position
+        double adjustedRad = measuredRad - homeAngleRadTurret; //Adjusting rads to physical position
         return adjustedRad;
     }
 
@@ -736,5 +804,49 @@ public class Shooter implements Loop {
 	public DataLogger getLogger()
 	{
 		return logger;
+    }
+
+
+
+
+    public void calibrate(){
+        if(!turretCalibrated){
+            turretMotor.set(ControlMode.PercentOutput, -0.125); //Turn right
+            if(turretMagnetDetector.update(!magnetSensor.get())){
+                turretMotor.set(ControlMode.PercentOutput, 0.0);
+                turretMotor.setSelectedSensorPosition(turretDegreesToEncoderUnits(turretMagnetAngleDeg), Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+                //homeAngleRadTurret = getTurretAngleRad()-Math.toRadians(turretMagnetAngleDeg);
+                turretCalibrated = true;
+            }
+        }
+        if(!hoodCalibrated){
+            hoodMotor.set(ControlMode.PercentOutput, -.25); //Move down
+            double error = getHoodDeg()-hoodLastPos;
+            hoodLastPos = getHoodDeg();
+            if(Math.abs(error)<=hoodCalibrationToleranceDeg){
+                hoodLoopCount++;
+            } else {
+                hoodLoopCount = 0;
+            }
+
+            if(hoodLoopCount > 20){
+                hoodMotor.set(ControlMode.PercentOutput, 0.0);
+                hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+                //homeAngleDegHood = getHoodDeg();
+                hoodCalibrated = true;
+                hoodLoopCount = 0;
+            }
+        }
+        
+        if(hoodCalibrated && turretCalibrated && !allCalibrated){
+            allCalibrated = true;
+            System.out.println("Turret and hood calibrated!");
+        }
+    }
+
+    public void resetForCalibration(){
+        allCalibrated = false;
+        hoodCalibrated = false;
+        turretCalibrated = false;
     }
 }

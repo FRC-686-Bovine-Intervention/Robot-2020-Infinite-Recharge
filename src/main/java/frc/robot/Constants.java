@@ -47,6 +47,8 @@ public class Constants extends ConstantsBase {
     public static int kShooterSlaveId =             32;
     public static int kShooterTurretID =            33;
     public static int kShooterHoodID =              34;
+    public static int kTurretHallEffectChannel =    0;
+
     public static int kPanelMasterId =              41;
 
 
@@ -57,7 +59,7 @@ public class Constants extends ConstantsBase {
     public static int kPTOSolenoid1Channel =        4;
     public static int kPTOSolenoid2Channel =        5;
     public static int kLiftLockSolenoid1Channel =   6;
-    public static int kLiftLockSolenoid2Channel =   7;    
+    public static int kLiftLockSolenoid2Channel =   7;   
 
 
 

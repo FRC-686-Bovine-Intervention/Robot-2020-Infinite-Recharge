@@ -213,45 +213,51 @@ public class ConveyorBelt implements Loop
     public void onLoop(){
         if(!SmartDashboard.getBoolean("Conveyor/Debug", false)){
             SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
-
-            if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
-                kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
-                conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
-                backupStartTime = Timer.getFPGATimestamp();
-            }
-            if(Timer.getFPGATimestamp()-backupStartTime >= backupSeconds && !shooterChecked){
-                conveyorMaster.set(ControlMode.PercentOutput, 0.0);
-            }
-
-            if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
-                if(shooterChecked){
-                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
-                    runHopper();
-                    storageCount = 0;
-                } else {
-                    stopHopper();
-                    shooterChecked = Shooter.getInstance().nearTarget(true);
-                }
-            } else if(Intake.getInstance().getCurrentPower() > 0) {
+            if(driverControls.getBoolean(DriverControlsEnum.RESET)){
+                stopHopper();
                 kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                if(storageCount < 3){
-                    runHopper();
-                    if(entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+            } else {
+
+                if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
+                    kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
+                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorBackUpPercent);
+                    backupStartTime = Timer.getFPGATimestamp();
+                }
+                if(Timer.getFPGATimestamp()-backupStartTime >= backupSeconds && !shooterChecked){
+                    conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+                }
+
+                if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
+                    if(shooterChecked){
                         conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                        runHopper();
+                        storageCount = 0;
+                    } else {
+                        stopHopper();
+                        shooterChecked = Shooter.getInstance().nearTarget(true);
+                    }
+                } else if(Intake.getInstance().getCurrentPower() > 0) {
+                    kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+                    if(storageCount < 3){
+                        runHopper();
+                        if(entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                            conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                            storageCount++;
+                        } else {
+                            conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+                        }
+                    }
+                } else {
+                    kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                        conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                        runHopper();
                         storageCount++;
                     } else {
                         conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+                        stopHopper();
                     }
-                }
-            } else {
-                kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127)){
-                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
-                    runHopper();
-                    storageCount++;
-                } else {
-                    conveyorMaster.set(ControlMode.PercentOutput, 0.0);
-                    stopHopper();
                 }
             }
 

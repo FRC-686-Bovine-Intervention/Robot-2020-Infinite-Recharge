@@ -216,7 +216,7 @@ public class ConveyorBelt implements Loop
 
             if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
                 kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
-                conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorBackUpPercent);
+                conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
                 backupStartTime = Timer.getFPGATimestamp();
             }
             if(Timer.getFPGATimestamp()-backupStartTime >= backupSeconds && !shooterChecked){
@@ -315,35 +315,6 @@ public class ConveyorBelt implements Loop
     //Tower Controls/Functions:
     //================================
 
-    public class MotorManagement{
-        //{{motor, power, startTime, runTime}, ...}
-        MotorData[] motorArray = new MotorData[4];
-        
-
-        MotorManagement(){}
-
-        public void update(){
-            for(MotorData motorData : motorArray){
-                
-            }
-        }
-
-        public void addMotor(TalonSRX motor){
-            for(int i = 0; i< motorArray.length; i++){
-                if(motorArray[i] == null){
-                    motorArray[i].motor = motor;
-                    break;
-                } 
-            }
-
-        }
-
-        public class MotorData{
-            public TalonSRX motor;
-            public double startTime, runTime, power;
-        }
-    }
-
     public void setTowerIPS(double ips){
         conveyorMaster.set(ControlMode.Velocity, ipsToEncoderUnitsPerFrameTower(ips));
     }
@@ -353,10 +324,34 @@ public class ConveyorBelt implements Loop
         conveyorMaster.set(ControlMode.MotionMagic, inchesToEncoderUnitsTower(inches) );
     }
 
-    public void feed(int numberOfBalls){
-        targetPosInches = getTowerPosInches() + (inchesPerBall*(double)numberOfBalls);
-        setTowerPosition(targetPosInches);
+    public void feed(){
+        runHopper();
+        conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);     
+
+        //Old code that relied on encoders:
+        //targetPosInches = getTowerPosInches() + (inchesPerBall*(double)numberOfBalls);
+        //setTowerPosition(targetPosInches);
     }
+
+    public void reverseTower(){
+        conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
+    }
+
+    public void stopTower(){
+        conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+    }
+
+    public void runKicker(){
+        kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
+    }
+
+    public void stopAll(){
+        stopHopper();
+        conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+        kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+    }
+
+
 
 
     public boolean nearTarget(){

@@ -1,20 +1,26 @@
 package frc.robot.auto.modes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import frc.robot.SmartDashboardInteractions;
 import frc.robot.auto.AutoModeBase;
 import frc.robot.auto.AutoModeEndedException;
+import frc.robot.auto.actions.Action;
 import frc.robot.auto.actions.AimShooterAction;
+import frc.robot.auto.actions.CalibrateAction;
 import frc.robot.auto.actions.FeedBallsAction;
 import frc.robot.auto.actions.IntakeAction;
 import frc.robot.auto.actions.IntakeStopAction;
+import frc.robot.auto.actions.ParallelAction;
 import frc.robot.auto.actions.PathFollowerAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
 import frc.robot.auto.actions.WaitAction;
 import frc.robot.lib.util.Path;
-import frc.robot.lib.util.Path.Waypoint;
 import frc.robot.lib.util.PathSegment;
 import frc.robot.lib.util.Pose;
 import frc.robot.lib.util.Vector2d;
+import frc.robot.lib.util.Path.Waypoint;
 import frc.robot.subsystems.Shooter;
 
 public class BallTheftAuto extends AutoModeBase {
@@ -35,6 +41,7 @@ public class BallTheftAuto extends AutoModeBase {
 
         double visionLookaheadDist = 24;
 
+
         PathSegment.Options   fastOptions = new PathSegment.Options(  fastSpeed,   fastSpeed/accelTime, fastSpeed/lookaheadTime, false);
         PathSegment.Options    medOptions = new PathSegment.Options(   medSpeed,    medSpeed/accelTime,  medSpeed/lookaheadTime, false);
         PathSegment.Options   slowOptions = new PathSegment.Options(  slowSpeed,   slowSpeed/accelTime, slowSpeed/lookaheadTime, false);
@@ -45,7 +52,6 @@ public class BallTheftAuto extends AutoModeBase {
         Vector2d startPosition = startPose.getPosition();
 
         double startDelaySec = smartDashboard.getStartDelay();
-
 
 
         //Paths
@@ -60,7 +66,12 @@ public class BallTheftAuto extends AutoModeBase {
         //Begin movements
         runAction(new WaitAction(startDelaySec));
         
-        runAction(new PathFollowerAction(startToOpponentTrench));
+        List<Action> moveAndCalibrate = new ArrayList<Action>();
+        moveAndCalibrate.add(new PathFollowerAction(startToOpponentTrench));
+        moveAndCalibrate.add(new CalibrateAction());
+        ParallelAction moveAndCalibrateAction = new ParallelAction(moveAndCalibrate);
+
+        runAction(moveAndCalibrateAction);
         runAction(new IntakeAction());
         runAction(new PathFollowerAction(approachingOpponentCellsPath));
         runAction(new IntakeStopAction());
@@ -78,6 +89,6 @@ public class BallTheftAuto extends AutoModeBase {
             runAction(new FeedBallsAction(3));
             shooter.setShooterRPM(0.0);
         }
-        shooter.setTurretAbsDeg(0); //Done to ensure that it is initialized properly with start of tele
+        shooter.setTurretAbsDeg(0);
     }
 }

@@ -179,7 +179,7 @@ public class Robot extends TimedRobot {
   public void stopAll()
   {
     loopController.stop();
-    //drive.stop();
+    //drive.stop(); //for now
   }
 
 

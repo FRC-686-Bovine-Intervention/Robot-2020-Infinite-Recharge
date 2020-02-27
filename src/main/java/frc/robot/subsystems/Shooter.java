@@ -157,8 +157,6 @@ public class Shooter implements Loop {
     //Test Mode Calibration Variables:
     private boolean turretCalibrated = false, hoodCalibrated = false, allCalibrated = false;
     private RisingEdgeDetector turretMagnetDetector = new RisingEdgeDetector();
-    private RisingEdgeDetector hoodCurrentDetector = new RisingEdgeDetector();
-    private static final double hoodThresholdCurrent = 6.5;
     private double hoodLastPos = 10000;
     private double hoodLoopCount = 0;
     private static final double hoodCalibrationToleranceDeg = .1;
@@ -411,7 +409,7 @@ public class Shooter implements Loop {
 
             Vector2d targetDisplacement = getTargetDisplacement();
             targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
-            double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
+            // double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
             // if(Math.abs(error)>=Math.toRadians(0.5)){
             //     setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
             // }

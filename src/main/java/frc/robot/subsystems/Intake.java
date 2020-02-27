@@ -48,6 +48,8 @@ public class Intake extends Subsystem implements Loop
     private IntakeState currentState = IntakeState.STORED;
     private boolean toggleLastState = false;
 
+    private double cPower = 0;
+
 
     public Intake(){
         intakeMotor = new VictorSPX(Constants.kIntakeTalonId);
@@ -120,6 +122,7 @@ public class Intake extends Subsystem implements Loop
     public void setPower(double percent)
     {
         intakeMotor.set(ControlMode.PercentOutput, percent);
+        cPower = percent;
     }
 
     public void extendToFloor(){
@@ -137,5 +140,9 @@ public class Intake extends Subsystem implements Loop
 
     public DoubleSolenoid.Value booleanToValue(boolean input){
         return input ? DoubleSolenoid.Value.kForward : DoubleSolenoid.Value.kReverse;
+    }
+
+    public double getCurrentPower(){
+        return cPower;
     }
 }

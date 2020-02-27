@@ -41,7 +41,10 @@ public class Constants extends ConstantsBase {
     public static int kConveyorbeltSlaveID =        23;
     public static int kConveyorHopperRightID =      24;
     public static int kConveyorHopperLeftId =       25;
-    public static int kConveyorKickerID=            26;
+    public static int kConveyorKickerMasterID=      26;
+    public static int kConveyorKickerSlaveID=       27;
+    public static int kEntranceProximityID =        28;
+
 
     public static int kShooterTalonId =             31;
     public static int kShooterSlaveId =             32;
@@ -66,6 +69,11 @@ public class Constants extends ConstantsBase {
 
     public static double kIntakePower = 0.5;
     public static double kConveyorFeedIPS = 7; //Inches per sec, feed rate of the tower
+
+    public static double kConveyorFeedPercent = .5;
+    public static double kConveyorBackUpPercent = 0.25;
+    public static double kKickerShootPercent = 0.75;
+
     public static double kConveyorBackupDist = 3;
 
     public static double kLeftHopperPercent = 0.25;

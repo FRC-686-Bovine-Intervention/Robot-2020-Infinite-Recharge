@@ -1,12 +1,19 @@
 package frc.robot.auto.modes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import frc.robot.SmartDashboardInteractions;
 import frc.robot.auto.AutoModeBase;
 import frc.robot.auto.AutoModeEndedException;
+import frc.robot.auto.actions.Action;
 import frc.robot.auto.actions.AimShooterAction;
+import frc.robot.auto.actions.CalibrateAction;
 import frc.robot.auto.actions.DriveStraightAction;
 import frc.robot.auto.actions.FeedBallsAction;
+import frc.robot.auto.actions.ParallelAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
+import frc.robot.auto.actions.WaitAction;
 import frc.robot.lib.util.Pose;
 import frc.robot.lib.util.Vector2d;
 import frc.robot.subsystems.Shooter;
@@ -21,10 +28,13 @@ public class SumoAuto extends AutoModeBase {
     protected void routine() throws AutoModeEndedException {
         SmartDashboardInteractions  smartDashboard = SmartDashboardInteractions.getInstance();
         Pose startPose = smartDashboard.getSelectedStartPose();
+        double startDelaySec = smartDashboard.getStartDelay();
         Vector2d backUpTargetPos = FieldDimensions.portPos.sub(startPose.getPosition());
 
 
-        AimShooterAction aimShooterAction = new AimShooterAction(backUpTargetPos.angle());
+        runAction(new WaitAction(startDelaySec));
+        
+        AimShooterAction aimShooterAction = new AimShooterAction();
         runAction(aimShooterAction);
         Vector2d targetPos = aimShooterAction.getSensedTargetPos();
         if(targetPos != null){
@@ -34,14 +44,13 @@ public class SumoAuto extends AutoModeBase {
         }
         runAction(new FeedBallsAction(4));
         shooter.setShooterRPM(0.0);
-        shooter.setTurretAbsDeg(0.0);
 
-
-        //Drive off line and push teammate (distance, velocity, heading)
-        runAction(new DriveStraightAction(-48,-24,startPose.getHeadingDeg()));
-    
-
-
+        
+        List<Action> driveAndCalibrate = new ArrayList<Action>();
+        driveAndCalibrate.add(new CalibrateAction());
+        driveAndCalibrate.add(new DriveStraightAction(-48,-24,startPose.getHeadingDeg())); //Drive off line and push teammate (distance, velocity, heading)
+        ParallelAction driveAndCalibrateAction = new ParallelAction(driveAndCalibrate);
+        runAction(driveAndCalibrateAction);
     }
 
 }

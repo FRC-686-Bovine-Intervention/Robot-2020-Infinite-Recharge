@@ -74,7 +74,7 @@ public class EightBallAuto extends AutoModeBase {
 
         runAction(new WaitAction(startDelaySec)); //Delay should probably be zero due to length of this mode. Might move this elsewhere
 
-        AimShooterAction aimShooterAction1 = new AimShooterAction(backUpTargetPosStart.angle()-pigeon.getHeadingDeg());
+        AimShooterAction aimShooterAction1 = new AimShooterAction();
         runAction(aimShooterAction1);
         Vector2d targetPos = aimShooterAction1.getSensedTargetPos();
         if(targetPos != null){
@@ -84,12 +84,12 @@ public class EightBallAuto extends AutoModeBase {
         }
         runAction(new FeedBallsAction(4));
         shooter.setShooterRPM(0.0);
-        shooter.setTurretAbsDeg(0.0);
 
         //Moving To Center
         List<Action> prepareToCollectActions = new ArrayList<Action>();
         prepareToCollectActions.add(new PathFollowerAction(startToMid));
         prepareToCollectActions.add(new IntakeAction());
+        prepareToCollectActions.add(new CalibrateAction()); //Added so we are ready for teleop and next shot
         runAction(new ParallelAction(prepareToCollectActions));
 
         //Collecting

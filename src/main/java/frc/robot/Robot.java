@@ -126,7 +126,7 @@ public class Robot extends TimedRobot {
 
     camera.autoInit();
 
-    selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
+    selectedDriverControls.setDriverControls(smartDashboardInteractions.getDriverControlsSelection());
 
     if (autoModeExecuter != null)
     {

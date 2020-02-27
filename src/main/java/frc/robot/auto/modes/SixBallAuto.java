@@ -61,7 +61,7 @@ public class SixBallAuto extends AutoModeBase {
         //run action - shoot
         
         runAction(new WaitAction(startDelaySec));
-        AimShooterAction aimShooterAction1 = new AimShooterAction(backUpTargetPosStart.angle()-pigeon.getHeadingDeg());
+        AimShooterAction aimShooterAction1 = new AimShooterAction();
         runAction(aimShooterAction1);
         Vector2d targetPos = aimShooterAction1.getSensedTargetPos();
         if(targetPos != null){
@@ -69,7 +69,7 @@ public class SixBallAuto extends AutoModeBase {
         } else {
             runAction(new SpeedUpShooterAction(backUpTargetPosStart.length()));
         }
-        runAction(new ShooterAction());
+        runAction(new FeedBallsAction(3));
         runAction(new StopShooterAction());
         //backup path to start of trench
         runAction(new PathFollowerAction(backupToTrenchPath));
@@ -81,14 +81,20 @@ public class SixBallAuto extends AutoModeBase {
         //lineup turret action
         runAction(new setTurretAction());
         //run action - shoot    runAction(new SpeedUpShooterAction(targetRPM));
-        runAction(aimShooterAction1);
-        targetPos = aimShooterAction1.getSensedTargetPos();
+        //Finding Target
+        Vector2d backUpTargetPosTrench = FieldDimensions.portPos.sub(FieldDimensions.allianceTrenchFarPos);
+        AimShooterAction aimShooterAction2 = new AimShooterAction(backUpTargetPosTrench.angle()-pigeon.getHeadingDeg());
+        runAction(aimShooterAction2);
+        targetPos = null; //Resetting so that the last taken measurement won't affect the following code
+        targetPos = aimShooterAction2.getSensedTargetPos();
+
+        //Determining if the speed should be changed and shooting:
         if(targetPos != null){
             runAction(new SpeedUpShooterAction(targetPos.length()));
         } else {
-            runAction(new SpeedUpShooterAction(backUpTargetPosStart.length()));
+            runAction(new SpeedUpShooterAction(backUpTargetPosTrench.length()));
         }
-        runAction(new ShooterAction());
+        runAction(new FeedBallsAction(3));
         runAction(new StopShooterAction());
                  
     }

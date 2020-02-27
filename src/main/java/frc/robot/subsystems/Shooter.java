@@ -155,7 +155,8 @@ public class Shooter implements Loop {
 
     //=================================
     //Test Mode Calibration Variables:
-    private boolean turretCalibrated = false, hoodCalibrated = false, allCalibrated = false;
+    private boolean turretCalibrated = false, hoodCalibrated = false;
+    public boolean allCalibrated = false;
     private RisingEdgeDetector turretMagnetDetector = new RisingEdgeDetector();
     private double hoodLastPos = 10000;
     private double hoodLoopCount = 0;

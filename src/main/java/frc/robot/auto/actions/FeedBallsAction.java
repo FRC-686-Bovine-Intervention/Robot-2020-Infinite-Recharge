@@ -1,5 +1,6 @@
 package frc.robot.auto.actions;
 
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.subsystems.ConveyorBelt;
 
@@ -9,6 +10,8 @@ public class FeedBallsAction implements Action {
 
     private int numberOfBalls; 
     private boolean finished;
+    private static final double timePerBall = 1.5;
+    private double startTime = 0;
 
 
     public FeedBallsAction(int numberOfBalls){
@@ -19,12 +22,14 @@ public class FeedBallsAction implements Action {
 
     @Override
     public void start() {
-        conveyorBelt.feed(numberOfBalls);
+        conveyorBelt.feed();
+        startTime = Timer.getFPGATimestamp();
     }
 
     @Override
     public void update() {
-        if(conveyorBelt.nearTarget()){
+        double elapsedTime = Timer.getFPGATimestamp()-startTime;
+        if(numberOfBalls*timePerBall <=elapsedTime){
             finished = true;
         }
     }
@@ -36,6 +41,7 @@ public class FeedBallsAction implements Action {
 
     @Override
     public void done() {
+        conveyorBelt.stopAll();
     }
 
     private final DataLogger logger = new DataLogger()

@@ -9,6 +9,8 @@ import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.lib.util.FallingEdgeDetector;
+import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.loops.LoopController;
 import frc.robot.vision.VisionDriveAssistant;
 import frc.robot.loops.DriveLoop;
@@ -32,6 +34,9 @@ public class Robot extends TimedRobot {
 
   DataLogController robotLogger;
   OperationalMode operationalMode = OperationalMode.getInstance();
+
+  boolean testLoopCheck = false;
+  FallingEdgeDetector testLoopEdge = new FallingEdgeDetector();
 
 
   @Override
@@ -65,7 +70,11 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    loopController.run();	
+    //loopController.run();	
+    if(testLoopEdge.update(testLoopCheck)){
+      Shooter.getInstance().resetForCalibration();
+    }
+    testLoopCheck = false;
   }
 
 
@@ -159,6 +168,7 @@ public class Robot extends TimedRobot {
   public void testPeriodic() {
     //Calibrating shooter!
     Shooter.getInstance().calibrate();
+    testLoopCheck = true;
   }
   
   public void zeroAllSensors()

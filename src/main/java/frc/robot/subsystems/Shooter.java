@@ -79,7 +79,7 @@ public class Shooter implements Loop {
 
     public final int kToleranceShooter = (int)rpmToEncoderUnitsPerFrame(10.0);
     public final int kToleranceTurret = turretDegreesToEncoderUnits(0.5);
-    public final int kToleranceHood = hoodDegreesToEncoderUnits(1);
+    public final int kToleranceHood = hoodDegreesToEncoderUnits(0.25);
 
     public final int kPeakCurrentLimit = 50;
     public final int kPeakCurrentDuration = 200;
@@ -158,8 +158,11 @@ public class Shooter implements Loop {
     private boolean turretCalibrated = false, hoodCalibrated = false, allCalibrated = false;
     private RisingEdgeDetector turretMagnetDetector = new RisingEdgeDetector();
     private RisingEdgeDetector hoodCurrentDetector = new RisingEdgeDetector();
-    private static final double hoodThresholdCurrent = 100000;
-    private static final double turretMagnetAngleDeg = 1000; //This is the what turret would output when lined up with magnet and calibrated properly
+    private static final double hoodThresholdCurrent = 6.5;
+    private double hoodLastPos = 10000;
+    private double hoodLoopCount = 0;
+    private static final double hoodCalibrationToleranceDeg = .1;
+    private static final double turretMagnetAngleDeg = Math.toDegrees(-3.0); //This is the what turret would output when lined up with magnet and calibrated properly
 
 
 
@@ -261,7 +264,7 @@ public class Shooter implements Loop {
         // turretMotor.configMotionAcceleration(rpmToEncoderUnitsPerFrame(10));
         // turretMotor.configMotionCruiseVelocity(rpmToEncoderUnitsPerFrame(2));
 
-        magnetSensor = new DigitalInput(Constants.kTurretHallEffect);
+        magnetSensor = new DigitalInput(Constants.kTurretHallEffectChannel);
     }
 
 
@@ -409,12 +412,14 @@ public class Shooter implements Loop {
             Vector2d targetDisplacement = getTargetDisplacement();
             targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
             double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
-            if(Math.abs(error)>=Math.toRadians(0.5)){
-                setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
-            }
+            // if(Math.abs(error)>=Math.toRadians(0.5)){
+            //     setTurretAbsDeg(Math.toDegrees(targetDisplacement.angle()));
+            // }
             setTurretDeg(SmartDashboard.getNumber("Shooter/Debug/SetTurretDeg", 0));
 
             setHoodDeg(SmartDashboard.getNumber("Shooter/Debug/SetHoodDeg", 0));
+
+            SmartDashboard.putBoolean("Shooter/Debug/HallEffectOutput", magnetSensor.get());
 
 
             //For testing auto-shooting:
@@ -806,8 +811,8 @@ public class Shooter implements Loop {
 
     public void calibrate(){
         if(!turretCalibrated){
-            turretMotor.set(ControlMode.PercentOutput, -0.25); //Turn right
-            if(turretMagnetDetector.update(magnetSensor.get())){
+            turretMotor.set(ControlMode.PercentOutput, -0.125); //Turn right
+            if(turretMagnetDetector.update(!magnetSensor.get())){
                 turretMotor.set(ControlMode.PercentOutput, 0.0);
                 turretMotor.setSelectedSensorPosition(turretDegreesToEncoderUnits(turretMagnetAngleDeg), Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
                 //homeAngleRadTurret = getTurretAngleRad()-Math.toRadians(turretMagnetAngleDeg);
@@ -816,11 +821,20 @@ public class Shooter implements Loop {
         }
         if(!hoodCalibrated){
             hoodMotor.set(ControlMode.PercentOutput, -.25); //Move down
-            if(hoodCurrentDetector.update(hoodMotor.getStatorCurrent() >= hoodThresholdCurrent)){
+            double error = getHoodDeg()-hoodLastPos;
+            hoodLastPos = getHoodDeg();
+            if(Math.abs(error)<=hoodCalibrationToleranceDeg){
+                hoodLoopCount++;
+            } else {
+                hoodLoopCount = 0;
+            }
+
+            if(hoodLoopCount > 20){
                 hoodMotor.set(ControlMode.PercentOutput, 0.0);
                 hoodMotor.setSelectedSensorPosition(0, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
                 //homeAngleDegHood = getHoodDeg();
                 hoodCalibrated = true;
+                hoodLoopCount = 0;
             }
         }
         
@@ -828,5 +842,11 @@ public class Shooter implements Loop {
             allCalibrated = true;
             System.out.println("Turret and hood calibrated!");
         }
+    }
+
+    public void resetForCalibration(){
+        allCalibrated = false;
+        hoodCalibrated = false;
+        turretCalibrated = false;
     }
 }

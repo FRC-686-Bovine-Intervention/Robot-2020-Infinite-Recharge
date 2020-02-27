@@ -7,14 +7,14 @@ import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
-import edu.wpi.first.wpilibj.PIDBase.Tolerance;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.loops.Loop;
 import frc.robot.subsystems.Shooter;
-import jdk.dynalink.linker.ConversionComparator;
 import frc.robot.Constants;
 
 
@@ -32,8 +32,9 @@ public class ConveyorBelt implements Loop
 		return instance;
     }
 
-    public TalonSRX conveyorMaster, kickerMotor;
-    public VictorSPX conveyorSlave, leftHopperMotor, rightHopperMotor;
+    //public TalonSRX conveyorMaster, kickerMotor;
+    public VictorSPX conveyorSlave, leftHopperMotor, rightHopperMotor, conveyorMaster, kickerMotorMaster, kickerMotorSlave;
+    public AnalogInput entranceProximitySensor;
 
 	
     public static final int kSlotIdxSpeed = 0;
@@ -82,101 +83,125 @@ public class ConveyorBelt implements Loop
     public double targetPosInches = 0;
     public static final double posToleranceInches = 1;
 
+
+    //Temp Code stuff
+    public int storageCount = 0;
+    private RisingEdgeDetector entranceEdge = new RisingEdgeDetector();
+    private double backupStartTime = 0;
+    private static final double backupSeconds = 1;
+
+
+
+
     public RisingEdgeDetector shootDetector = new RisingEdgeDetector();
 
     public ConveyorBelt() 
     {
-        conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
+        entranceProximitySensor = new AnalogInput(Constants.kEntranceProximityID);
+
+        // conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
+        // kickerMotor = new TalonSRX(Constants.kConveyorKickerID);
+        kickerMotorMaster = new VictorSPX(Constants.kConveyorKickerMasterID);
+        kickerMotorSlave = new VictorSPX(Constants.kConveyorKickerSlaveID);
+        conveyorMaster = new VictorSPX(Constants.kConveyorbeltMasterID);
         conveyorSlave = new VictorSPX(Constants.kConveyorbeltSlaveID);
         leftHopperMotor = new VictorSPX(Constants.kConveyorHopperLeftId);
         rightHopperMotor = new VictorSPX(Constants.kConveyorHopperRightID);
-        kickerMotor = new TalonSRX(Constants.kConveyorKickerID);
+
 
         conveyorMaster.configFactoryDefault();
         conveyorSlave.configFactoryDefault();
         leftHopperMotor.configFactoryDefault();
         rightHopperMotor.configFactoryDefault();
-        kickerMotor.configFactoryDefault();
+        kickerMotorMaster.configFactoryDefault();
+        kickerMotorSlave.configFactoryDefault();
 
 
-        conveyorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-        conveyorMaster.setSensorPhase(true);
-        conveyorMaster.setInverted(false);
+        // conveyorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        // conveyorMaster.setSensorPhase(true);
+        // conveyorMaster.setInverted(false);
 
-        conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // conveyorMaster.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
 
-        //Config for position PID:
-        conveyorMaster.selectProfileSlot(kSlotIdxPos, Constants.kTalonPidIdx);
-        conveyorMaster.config_kF(kSlotIdxPos, kKfPosTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kP(kSlotIdxPos, kKpPosTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kI(kSlotIdxPos, kKiPosTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kD(kSlotIdxPos, kKdPosTower, Constants.kTalonPidIdx);
+        // //Config for position PID:
+        // conveyorMaster.selectProfileSlot(kSlotIdxPos, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kF(kSlotIdxPos, kKfPosTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kP(kSlotIdxPos, kKpPosTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kI(kSlotIdxPos, kKiPosTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kD(kSlotIdxPos, kKdPosTower, Constants.kTalonPidIdx);
 
-        //Config for velocity PID:
-        conveyorMaster.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
-        conveyorMaster.config_kF(kSlotIdxSpeed, kKfSpeedTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kP(kSlotIdxSpeed, kKpSpeedTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kI(kSlotIdxSpeed, kKiSpeedTower, Constants.kTalonPidIdx);
-        conveyorMaster.config_kD(kSlotIdxSpeed, kKdSpeedTower, Constants.kTalonPidIdx);
+        // //Config for velocity PID:
+        // conveyorMaster.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kF(kSlotIdxSpeed, kKfSpeedTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kP(kSlotIdxSpeed, kKpSpeedTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kI(kSlotIdxSpeed, kKiSpeedTower, Constants.kTalonPidIdx);
+        // conveyorMaster.config_kD(kSlotIdxSpeed, kKdSpeedTower, Constants.kTalonPidIdx);
 
-        //Motion Magic magic
-        conveyorMaster.configMotionCruiseVelocity((int)kCruiseVelocity);
-        conveyorMaster.configMotionAcceleration((int)kMaxAcceleration);
+        // //Motion Magic magic
+        // conveyorMaster.configMotionCruiseVelocity((int)kCruiseVelocity);
+        // conveyorMaster.configMotionAcceleration((int)kMaxAcceleration);
 
-        //Current limits and stuff
-        conveyorMaster.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
-        conveyorMaster.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
-        conveyorMaster.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
-        conveyorMaster.enableCurrentLimit(true);
+        // //Current limits and stuff
+        // conveyorMaster.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        // conveyorMaster.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        // conveyorMaster.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        // conveyorMaster.enableCurrentLimit(true);
     
 
-        //Setting up slave
+        //Setting up slaves
         conveyorSlave.follow(conveyorMaster);
         conveyorSlave.setInverted(false);
 
+        kickerMotorSlave.follow(kickerMotorMaster);
+        kickerMotorSlave.setInverted(true);
 
-        //===============
-        //Kicker Config:
-        //===============
-        kickerMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
-        kickerMotor.setSensorPhase(true);
-        kickerMotor.setInverted(false);
 
-        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
-        kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // //===============
+        // //Kicker Config:
+        // //===============
+        // kickerMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
+        // kickerMotor.setSensorPhase(true);
+        // kickerMotor.setInverted(false);
 
-        //Config for velocity PID:
-        kickerMotor.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
-        kickerMotor.config_kF(kSlotIdxSpeed, kKfSpeedKicker, Constants.kTalonPidIdx);
-        kickerMotor.config_kP(kSlotIdxSpeed, kKpSpeedKicker, Constants.kTalonPidIdx);
-        kickerMotor.config_kI(kSlotIdxSpeed, kKiSpeedKicker, Constants.kTalonPidIdx);
-        kickerMotor.config_kD(kSlotIdxSpeed, kKdSpeedKicker, Constants.kTalonPidIdx);
+        // kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
+        // kickerMotor.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, (int)(1000*Constants.kLoopDt), Constants.kTalonTimeoutMs);
 
-        //Current limits and stuff
-        kickerMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
-        kickerMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
-        kickerMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
-        kickerMotor.enableCurrentLimit(true);
+        // //Config for velocity PID:
+        // kickerMotor.selectProfileSlot(kSlotIdxSpeed, Constants.kTalonPidIdx);
+        // kickerMotor.config_kF(kSlotIdxSpeed, kKfSpeedKicker, Constants.kTalonPidIdx);
+        // kickerMotor.config_kP(kSlotIdxSpeed, kKpSpeedKicker, Constants.kTalonPidIdx);
+        // kickerMotor.config_kI(kSlotIdxSpeed, kKiSpeedKicker, Constants.kTalonPidIdx);
+        // kickerMotor.config_kD(kSlotIdxSpeed, kKdSpeedKicker, Constants.kTalonPidIdx);
+
+        // //Current limits and stuff
+        // kickerMotor.configPeakCurrentLimit(kPeakCurrentLimit, Constants.kTalonTimeoutMs);
+        // kickerMotor.configPeakCurrentDuration(kPeakCurrentDuration, Constants.kTalonTimeoutMs);
+        // kickerMotor.configContinuousCurrentLimit(kContinuousCurrentLimit, Constants.kTalonTimeoutMs);
+        // kickerMotor.enableCurrentLimit(true);
 
 
 
         SmartDashboard.putBoolean("Conveyor/Debug", false);
-        SmartDashboard.putNumber("Conveyor/Debug/SetTowerIPS", 0);
-        SmartDashboard.putNumber("Conveyor/Debug/SetTowerPosInches", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/SetTowerIPS", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/SetTowerPosInches", 0);
 
-        SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", 0);
-        SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", 0);
 
         SmartDashboard.putNumber("Conveyor/Debug/SetLeftHopperPercent", 0);
         SmartDashboard.putNumber("Conveyor/Debug/SetRightHopperPercent", 0);
 
-        SmartDashboard.putNumber("Conveyor/Debug/SetKickerRPM", 0);
-        SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/SetKickerRPM", 0);
+        // SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", 0);
+
+
+        SmartDashboard.putNumber("Conveyor/Debug/SetTowerPercent", 0);
+        SmartDashboard.putNumber("Conveyor/Debug/SetKickerPercent", 0);
     }
 
     @Override
@@ -190,39 +215,84 @@ public class ConveyorBelt implements Loop
             SelectedDriverControls driverControls = SelectedDriverControls.getInstance();
 
             if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
-                setTowerPosition(getTowerPosInches()-Constants.kConveyorBackupDist);
+                kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
+                conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorBackUpPercent);
+                backupStartTime = Timer.getFPGATimestamp();
+            }
+            if(Timer.getFPGATimestamp()-backupStartTime >= backupSeconds && !shooterChecked){
+                conveyorMaster.set(ControlMode.PercentOutput, 0.0);
             }
 
-            //Starts feeding when shooter has achieved a high enough speed
             if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
-                if(!shooterChecked){
-                    shooterChecked = Shooter.getInstance().nearTarget(true);
+                if(shooterChecked){
+                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                    runHopper();
+                    storageCount = 0;
                 } else {
-                    setTowerIPS(Constants.kConveyorFeedIPS);
+                    stopHopper();
+                    shooterChecked = Shooter.getInstance().nearTarget(true);
                 }
-                setKickerRPM(Shooter.getInstance().getTargetRPM()*Constants.kKickerProportion);
+            } else if(Intake.getInstance().getCurrentPower() > 0) {
+                kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+                if(storageCount < 3){
+                    runHopper();
+                    if(entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                        conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                        storageCount++;
+                    } else {
+                        conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+                    }
+                }
             } else {
-                setTowerIPS(0.0);
-                setKickerRPM(0.0);
+                kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+                if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                    runHopper();
+                    storageCount++;
+                } else {
+                    conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+                    stopHopper();
+                }
             }
+
+            // if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
+            //     setTowerPosition(getTowerPosInches()-Constants.kConveyorBackupDist);
+            // }
+
+            // //Starts feeding when shooter has achieved a high enough speed
+            // if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
+            //     if(!shooterChecked){
+            //         shooterChecked = Shooter.getInstance().nearTarget(true);
+            //     } else {
+            //         setTowerIPS(Constants.kConveyorFeedIPS);
+            //     }
+            //     setKickerRPM(Shooter.getInstance().getTargetRPM()*Constants.kKickerProportion);
+            // } else {
+            //     setTowerIPS(0.0);
+            //     setKickerRPM(0.0);
+            // }
         } else {
-            //Favors velocity over position
-            if(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0) != 0){
-                setTowerIPS(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0));
-            } else {
-                setTowerPosition(SmartDashboard.getNumber("Conveyor/Debug/SetTowerPosInches", 0));
-            }
+            // //Favors velocity over position
+            // if(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0) != 0){
+            //     setTowerIPS(SmartDashboard.getNumber("Conveyor/Debug/SetTowerIPS", 0));
+            // } else {
+            //     setTowerPosition(SmartDashboard.getNumber("Conveyor/Debug/SetTowerPosInches", 0));
+            // }
 
             leftHopperMotor.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetLeftHopperPercent", 0));
             rightHopperMotor.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetRightHopperPercent", 0));
 
-            setKickerRPM(SmartDashboard.getNumber("Conveyor/Debug/SetKickerRPM", 0));
+            // setKickerRPM(SmartDashboard.getNumber("Conveyor/Debug/SetKickerRPM", 0));
 
+            kickerMotorMaster.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetKickerPercent", 0));
+
+            conveyorMaster.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetTowerPercent", 0));
             
-            //Outputting Sensor Data:
-            SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", getTowerIPS());
-            SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", getTowerPosInches());
-            SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", getKickerSensedRPM());
+            
+            // //Outputting Sensor Data:
+            // SmartDashboard.putNumber("Conveyor/Debug/SensedTowerIPS", getTowerIPS());
+            // SmartDashboard.putNumber("Conveyor/Debug/SensedTowerPosInches", getTowerPosInches());
+            // SmartDashboard.putNumber("Conveyor/Debug/KickerSensedRPM", getKickerSensedRPM());
         }
     }
 
@@ -237,13 +307,42 @@ public class ConveyorBelt implements Loop
 
     public void stop()
     {
-        setTowerIPS(0);
+        //setTowerIPS(0);
     }
 
 
     //================================
     //Tower Controls/Functions:
     //================================
+
+    public class MotorManagement{
+        //{{motor, power, startTime, runTime}, ...}
+        MotorData[] motorArray = new MotorData[4];
+        
+
+        MotorManagement(){}
+
+        public void update(){
+            for(MotorData motorData : motorArray){
+                
+            }
+        }
+
+        public void addMotor(TalonSRX motor){
+            for(int i = 0; i< motorArray.length; i++){
+                if(motorArray[i] == null){
+                    motorArray[i].motor = motor;
+                    break;
+                } 
+            }
+
+        }
+
+        public class MotorData{
+            public TalonSRX motor;
+            public double startTime, runTime, power;
+        }
+    }
 
     public void setTowerIPS(double ips){
         conveyorMaster.set(ControlMode.Velocity, ipsToEncoderUnitsPerFrameTower(ips));
@@ -317,12 +416,12 @@ public class ConveyorBelt implements Loop
     //==================
 
     public void setKickerRPM(double RPM){
-        kickerMotor.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrameKicker(RPM));
+        //kickerMotor.set(ControlMode.Velocity, rpmToEncoderUnitsPerFrameKicker(RPM));
     }
 
-    public double getKickerSensedRPM(){
-        return encoderUnitsPerFrameToRPMKicker(kickerMotor.getSelectedSensorVelocity());
-    }
+    // public double getKickerSensedRPM(){
+    //     return encoderUnitsPerFrameToRPMKicker(kickerMotor.getSelectedSensorVelocity());
+    // }
 
 
     private static int rpmToEncoderUnitsPerFrameKicker(double _rpm){

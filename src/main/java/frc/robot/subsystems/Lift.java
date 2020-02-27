@@ -40,6 +40,9 @@ public class Lift extends Subsystem implements Loop {
         lockSolenoid1 = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoid1Channel);
         lockSolenoid2 = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoid2Channel);
 
+        lockLift();
+        shiftToDrive();
+
         SmartDashboard.putBoolean("Lift/Debug", false);
         SmartDashboard.putBoolean("Lift/Debug/PTOSolenoids", false);
         SmartDashboard.putBoolean("Lift/Debug/LockSolenoids", false);
@@ -57,17 +60,17 @@ public class Lift extends Subsystem implements Loop {
             if(driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO) && !PTOLastState){
                 if(cPTOState == PTOTansmissionState.DRIVE_ENABLED){
                     shiftToLift();
+                    unlockLift();
                 } else if(cPTOState == PTOTansmissionState.LIFT_ENABLED){
                     shiftToDrive();
+                    lockLift();
                 }
             }
             PTOLastState = driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO);
 
             if(driverControls.getBoolean(DriverControlsEnum.LOCK_LIFT)) {
                 lockLift();
-            }
-
-            if(driverControls.getBoolean(DriverControlsEnum.UNLOCK_LIFT)){
+            } else if(driverControls.getBoolean(DriverControlsEnum.UNLOCK_LIFT)){
                 unlockLift();
             }
         } else {

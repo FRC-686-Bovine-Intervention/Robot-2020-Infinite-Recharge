@@ -44,6 +44,7 @@ public class Constants extends ConstantsBase {
     public static int kConveyorKickerMasterID=      26;
     public static int kConveyorKickerSlaveID=       27;
     public static int kEntranceProximityID =        0;
+    public static int kExitProximityID =            1;
 
 
     public static int kShooterTalonId =             31;

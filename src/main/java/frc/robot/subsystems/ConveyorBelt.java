@@ -34,7 +34,7 @@ public class ConveyorBelt implements Loop
 
     //public TalonSRX conveyorMaster, kickerMotor;
     public VictorSPX conveyorSlave, leftHopperMotor, rightHopperMotor, conveyorMaster, kickerMotorMaster, kickerMotorSlave;
-    public AnalogInput entranceProximitySensor;
+    public AnalogInput entranceProximitySensor, exitProximitySensor;
 
 	
     public static final int kSlotIdxSpeed = 0;
@@ -98,6 +98,7 @@ public class ConveyorBelt implements Loop
     public ConveyorBelt() 
     {
         entranceProximitySensor = new AnalogInput(Constants.kEntranceProximityID);
+        exitProximitySensor = new AnalogInput(Constants.kExitProximityID);
 
         // conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
         // kickerMotor = new TalonSRX(Constants.kConveyorKickerID);
@@ -239,7 +240,7 @@ public class ConveyorBelt implements Loop
                     }
                 } else if(Intake.getInstance().getCurrentPower() > 0) {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount < 3){
+                    if(storageCount < 3 && exitProximitySensor.getValue()<127){
                         runHopper();
                         if(entranceEdge.update(entranceProximitySensor.getValue()<127)){
                             conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
@@ -250,7 +251,7 @@ public class ConveyorBelt implements Loop
                     }
                 } else {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127) && exitProximitySensor.getValue()<127){
                         conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
                         runHopper();
                         storageCount++;

@@ -59,7 +59,7 @@ public class Intake extends Subsystem implements Loop
 
 
     public Intake(){
-        intakeMotor = new VictorSPX(Constants.kIntakeTalonId);
+        intakeMotor = new TalonSRX(Constants.kIntakeTalonId);
         intakeMotor.configFactoryDefault();
         intakeMotor.setInverted(true);
 

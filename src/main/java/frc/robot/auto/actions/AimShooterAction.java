@@ -27,12 +27,16 @@ public class AimShooterAction implements Action {
     public AimShooterAction(double suggestedDeg) {
         backupAngle = suggestedDeg;
     }
+    public AimShooterAction(){}
 
 
 
     @Override
     public void start() {
-        shooter.setTurretAbsDeg(backupAngle); //Start by looking in the general direction
+        //Somewhat outdated....
+        if(backupAngle != 0){
+            shooter.setTurretAbsDeg(backupAngle); //Start by looking in the general direction
+        }
     }
 
     @Override

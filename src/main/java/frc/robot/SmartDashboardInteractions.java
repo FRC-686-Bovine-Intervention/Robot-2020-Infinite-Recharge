@@ -70,6 +70,7 @@ public class SmartDashboardInteractions
         autoModeChooser.addOption(AutoModeOption.SIX_BALL_AUTO.toString(), AutoModeOption.SIX_BALL_AUTO);
         autoModeChooser.addOption(AutoModeOption.EIGHT_BALL_AUTO.toString(), AutoModeOption.EIGHT_BALL_AUTO);
         autoModeChooser.addOption(AutoModeOption.SUMO_AUTO.toString(), AutoModeOption.SUMO_AUTO);
+        autoModeChooser.addOption(AutoModeOption.CALIBRATE_AUTO.toString(), AutoModeOption.CALIBRATE_AUTO);
         autoModeChooser.setDefaultOption(AutoModeOption.SUMO_AUTO.toString(), AutoModeOption.SUMO_AUTO);
         SmartDashboard.putData("Auto Selection", autoModeChooser);
 
@@ -164,7 +165,8 @@ public class SmartDashboardInteractions
         BALL_THEFT_AUTO("Ball Theft Auto"),
         SIX_BALL_AUTO("Movement Auto"),
         EIGHT_BALL_AUTO("Movement Auto"),
-        SUMO_AUTO("Movement Auto");
+        SUMO_AUTO("Movement Auto"),
+        CALIBRATE_AUTO("Calibrate Auto");
 
         public final String name;
 
@@ -187,6 +189,8 @@ public class SmartDashboardInteractions
             return new EightBallAuto();
         case SUMO_AUTO:
             return new SumoAuto();
+        case CALIBRATE_AUTO:
+            return new CalibrateAuto();
         default:
             System.out.println("ERROR: unexpected auto mode: " + autoMode);
             return new StandStillMode();

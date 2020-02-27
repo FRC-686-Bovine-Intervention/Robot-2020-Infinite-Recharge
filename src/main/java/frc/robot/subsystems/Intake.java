@@ -13,6 +13,7 @@ import frc.robot.Constants;
 import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
+import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.loops.Loop;
 
 
@@ -47,6 +48,7 @@ public class Intake extends Subsystem implements Loop
     }
     private IntakeState currentState = IntakeState.STORED;
     private boolean toggleLastState = false;
+    private RisingEdgeDetector toggleDetector = new RisingEdgeDetector();
 
     private double cPower = 0;
 
@@ -76,23 +78,24 @@ public class Intake extends Subsystem implements Loop
     public void onLoop() {
         if(!SmartDashboard.getBoolean("Lift/Debug", false)){
             DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
-
-            if (driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE) && !toggleLastState){
-                if(currentState == IntakeState.STORED){
-                    //Toggle to floor
-                    extendToFloor();
-                    setPower(Constants.kIntakePower);
-                } else if(currentState == IntakeState.GROUND){
-                    //Toggle to stored
+            if(driverControls.getBoolean(DriverControlsEnum.RESET)){
+                retract();
+            } else {
+                if (toggleDetector.update(driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE))){
+                    if(currentState == IntakeState.STORED){
+                        //Toggle to floor
+                        extendToFloor();
+                        setPower(Constants.kIntakePower);
+                    } else if(currentState == IntakeState.GROUND){
+                        //Toggle to stored
+                        retract();
+                    }
+                }
+                else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
+                {
                     retract();
                 }
             }
-            else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
-            {
-                retract();
-            }
-
-            toggleLastState = driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE);
         } else {
             setPower(SmartDashboard.getNumber("Intake/Debug/IntakePower", 0));
             mainSolenoids.set(booleanToValue(SmartDashboard.getBoolean("Intake/Debug/MainSolenoids", false)));

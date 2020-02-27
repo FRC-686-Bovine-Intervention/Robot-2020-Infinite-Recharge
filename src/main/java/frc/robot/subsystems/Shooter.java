@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.command_status.DriveState;
@@ -17,7 +18,9 @@ import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
+import frc.robot.lib.sensors.Limelight.LedMode;
 import frc.robot.lib.util.DataLogger;
+import frc.robot.lib.util.FallingEdgeDetector;
 import frc.robot.lib.util.Kinematics;
 import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
@@ -119,7 +122,7 @@ public class Shooter implements Loop {
 
     //Shooter Operational States
     public enum ShooterState {
-        IDLING, WAITING, SEARCHING, TRACKING, READJUSTING, SHOOTING
+        IDLING, CALIBRATING, WAITING, SEARCHING, TRACKING, READJUSTING, SHOOTING
     }
     ShooterState cState = ShooterState.SEARCHING;
     
@@ -139,8 +142,11 @@ public class Shooter implements Loop {
 
     public double sweepStartTime = 0;
     public double sweepPhaseAngleDeg = 0;
+    public static double sweepSeconds = 1.5;
     public static final double sweepRangeDeg = 90;
     public double[] sweepIntervalDeg = {-sweepRangeDeg/2.0,sweepRangeDeg/2.0};
+
+    RisingEdgeDetector searchEdge = new RisingEdgeDetector();
 
 
     // Distance vs. RPM & Hood Pos Table
@@ -157,11 +163,11 @@ public class Shooter implements Loop {
     //Test Mode Calibration Variables:
     private boolean turretCalibrated = false, hoodCalibrated = false, allCalibrated = false;
     private RisingEdgeDetector turretMagnetDetector = new RisingEdgeDetector();
+    private FallingEdgeDetector calibrationFallEdge = new FallingEdgeDetector();
     private double hoodLastPos = 10000;
     private double hoodLoopCount = 0;
     private static final double hoodCalibrationToleranceDeg = .1;
     private static final double turretMagnetAngleDeg = Math.toDegrees(-3.0); //This is the what turret would output when lined up with magnet and calibrated properly
-
 
 
 
@@ -274,70 +280,102 @@ public class Shooter implements Loop {
 
     @Override
     public void onLoop() {
-        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){
-            //Checking the target status and determining its relative displacement:
-            Vector2d targetDisplacement;
-            if(camera.getIsTargetFound()){
-                targetLostCount = 0;
-                targetDisplacement = getTargetDisplacement();
-                if(cState != ShooterState.SHOOTING){
-                    cState = ShooterState.TRACKING; //Jump to the tracking status in order to keep it in view
-                }
-            } else if(cState == ShooterState.READJUSTING){
-                //Don't add to the counter, give the turret time to readjust
-                targetDisplacement = lastTargetPos; 
-            } else {
-                targetLostCount++;
-                targetDisplacement = lastTargetPos;
-            }
-            lastTargetPos = targetDisplacement;
+        if(!SmartDashboard.getBoolean("Shooter/Debug", false)){   
+            Vector2d targetDisplacement = null;
 
-            //Determining if a the state should be swapped to handle target loss:
-            if(targetLostCount >= maxLostCountTracking){
-                cState = ShooterState.SEARCHING; //Begin actively looking for the target
-            } else if(targetLostCount >= maxLostCountShooting) {
-                cState = ShooterState.WAITING; //Stop shooting and wait to see if target comes back
-            }
-
-            //Taking in user input and adjusting state accordingly
             DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
-            if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && cState == ShooterState.TRACKING){
-                cState = ShooterState.SHOOTING;
-            }
-
-
-            //Checking if we can even readjust
-            switch(cState){
-                case SEARCHING:
-                    readjustmentEnabled = searchingRangeDeg > 360.0;
-                case TRACKING:
-                    readjustmentEnabled = trackingRangeDeg > 360.0;
-                case SHOOTING:
-                    readjustmentEnabled = shootingRangeDeg > 360.0;
-                default:
-                    readjustmentEnabled = false;
-            }
-            //Checking turret rotation to ensure wires don't get wrapped up:
-            if(readjustmentEnabled){
-                if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
-                    cState = ShooterState.READJUSTING;
-                    targetAdjustRads = getTurretAbsoluteAngleRad();
-                }
-            } else {
-                if(checkTurretOutOfBounds(cState)){
-                    cState = ShooterState.WAITING;
-                    setTurretDeg(limitTurretInputDeg(Math.toDegrees(getTurretAngleRad()))); //Send it to the closest bound
-                }
-            }
             
+            if(calibrationFallEdge.update(cState == ShooterState.CALIBRATING)){
+                resetForCalibration();
+            }
+
+            if(driverControls.getBoolean(DriverControlsEnum.RESET)){
+                Limelight.getInstance().setLEDMode(LedMode.kOff);
+                cState = ShooterState.IDLING;
+            } else if(driverControls.getBoolean(DriverControlsEnum.CALIBRATE) || cState == ShooterState.CALIBRATING){
+                cState = ShooterState.CALIBRATING;
+            } else {
+                if(searchEdge.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
+                    cState = ShooterState.SEARCHING;
+                    sweepStartTime = Timer.getFPGATimestamp();
+                    Limelight.getInstance().setLEDMode(LedMode.kOn);
+                }
+
+                if(driverControls.getBoolean(DriverControlsEnum.SHOOT)){
+                    //Checking the target status and determining its relative displacement:
+                    if(camera.getIsTargetFound()){
+                        targetLostCount = 0;
+                        targetDisplacement = getTargetDisplacement();
+                        if(cState != ShooterState.SHOOTING){
+                            cState = ShooterState.TRACKING; //Jump to the tracking status in order to keep it in view
+                        }
+                    } else if(cState == ShooterState.READJUSTING){
+                        //Don't add to the counter, give the turret time to readjust
+                        targetDisplacement = lastTargetPos; 
+                    } else {
+                        targetLostCount++;
+                        targetDisplacement = lastTargetPos;
+                    }
+                    lastTargetPos = targetDisplacement;
+
+                    //Determining if a the state should be swapped to handle target loss:
+                    if(targetLostCount >= maxLostCountTracking){
+                        cState = ShooterState.SEARCHING; //Begin actively looking for the target
+                    } else if(targetLostCount >= maxLostCountShooting) {
+                        cState = ShooterState.WAITING; //Stop shooting and wait to see if target comes back
+                    }
+
+                    //Taking in user input and adjusting state accordingly
+                    if(driverControls.getBoolean(DriverControlsEnum.SHOOT) && cState == ShooterState.TRACKING){
+                        cState = ShooterState.SHOOTING;
+                    }
+
+
+                    //Checking if we can even readjust
+                    switch(cState){
+                        case SEARCHING:
+                            readjustmentEnabled = searchingRangeDeg > 360.0;
+                        case TRACKING:
+                            readjustmentEnabled = trackingRangeDeg > 360.0;
+                        case SHOOTING:
+                            readjustmentEnabled = shootingRangeDeg > 360.0;
+                        default:
+                            readjustmentEnabled = false;
+                    }
+                    //Checking turret rotation to ensure wires don't get wrapped up:
+                    if(readjustmentEnabled){
+                        if(checkTurretOutOfBounds(cState) && cState != ShooterState.READJUSTING){
+                            cState = ShooterState.READJUSTING;
+                            targetAdjustRads = getTurretAbsoluteAngleRad();
+                        }
+                    } else {
+                        if(checkTurretOutOfBounds(cState)){
+                            cState = ShooterState.WAITING;
+                            setTurretDeg(limitTurretInputDeg(Math.toDegrees(getTurretAngleRad()))); //Send it to the closest bound
+                        }
+                    }
+                
+                } else {
+                    Limelight.getInstance().setLEDMode(LedMode.kOff);
+                    setTurretDeg(0.0);
+                    setShooterRPM(0.0);
+                    setHoodDeg(0.0);
+                }
+            }
 
             //Reacting based on the determined cState:
             switch(cState){
                 case IDLING:
                     //Hold everything in place
                     setShooterRPM(0);
-                    setTurretAbsDeg(0);
+                    setTurretDeg(0);
                     setHoodDeg(0);
+                    break;
+                
+                case CALIBRATING:
+                    Limelight.getInstance().setLEDMode(LedMode.kOff);
+                    setShooterRPM(0);
+                    calibrate();
                     break;
 
                 case WAITING:
@@ -349,8 +387,10 @@ public class Shooter implements Loop {
                     //Look around
                     setShooterRPM(0);
                     setHoodDeg(0);
-                    double cHeading = pigeon.getHeadingDeg();
-                    setTurretAbsDeg(Math.copySign(180-Math.abs(cHeading), cHeading)); //Always facing our port. Relies on proper initialization
+
+                    double elapsedTime = Timer.getFPGATimestamp()-sweepStartTime;
+                    double angleDeg = Math.cos((elapsedTime/sweepSeconds)*Math.PI)*sweepRangeDeg;
+                    setTurretAbsDeg(angleDeg); //Always facing our port. Relies on proper initialization
                     break;
 
                 case TRACKING:
@@ -839,6 +879,7 @@ public class Shooter implements Loop {
         if(hoodCalibrated && turretCalibrated && !allCalibrated){
             allCalibrated = true;
             System.out.println("Turret and hood calibrated!");
+            cState = ShooterState.SEARCHING;
         }
     }
 

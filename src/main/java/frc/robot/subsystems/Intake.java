@@ -3,11 +3,13 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value.*;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants;
 import frc.robot.lib.joystick.DriverControlsBase;
@@ -29,7 +31,7 @@ public class Intake extends Subsystem implements Loop
 		return instance;
     }
 
-    public VictorSPX intakeMotor;
+    public TalonSRX intakeMotor;
     public DoubleSolenoid mainSolenoids, secondarySolenoids;
 
     private int kSlotId = 0;
@@ -49,6 +51,9 @@ public class Intake extends Subsystem implements Loop
     private IntakeState currentState = IntakeState.STORED;
     private boolean toggleLastState = false;
     private RisingEdgeDetector toggleDetector = new RisingEdgeDetector();
+    private static final double intakeCurrentThreshold = 6.0;
+    private double reverseStartTime = 0;
+    private static final double reverseTime = 1;
 
     private double cPower = 0;
 
@@ -81,19 +86,26 @@ public class Intake extends Subsystem implements Loop
             if(driverControls.getBoolean(DriverControlsEnum.RESET)){
                 retract();
             } else {
-                if (toggleDetector.update(driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE))){
-                    if(currentState == IntakeState.STORED){
-                        //Toggle to floor
-                        extendToFloor();
-                        setPower(Constants.kIntakePower);
-                    } else if(currentState == IntakeState.GROUND){
-                        //Toggle to stored
+                if(intakeMotor.getStatorCurrent() >= intakeCurrentThreshold){
+                    reverseStartTime = Timer.getFPGATimestamp();
+                }
+                if(Timer.getFPGATimestamp()-reverseStartTime < reverseTime){
+                    setPower(-Constants.kIntakePower);
+                } else {
+                    if (toggleDetector.update(driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE))){
+                        if(currentState == IntakeState.STORED){
+                            //Toggle to floor
+                            extendToFloor();
+                            setPower(Constants.kIntakePower);
+                        } else if(currentState == IntakeState.GROUND){
+                            //Toggle to stored
+                            retract();
+                        }
+                    }
+                    else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
+                    {
                         retract();
                     }
-                }
-                else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
-                {
-                    retract();
                 }
             }
         } else {

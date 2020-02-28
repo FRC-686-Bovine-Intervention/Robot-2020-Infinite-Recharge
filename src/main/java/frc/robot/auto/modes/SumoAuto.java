@@ -14,6 +14,7 @@ import frc.robot.auto.actions.FeedBallsAction;
 import frc.robot.auto.actions.ParallelAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
 import frc.robot.auto.actions.WaitAction;
+import frc.robot.lib.sensors.Pigeon;
 import frc.robot.lib.util.Pose;
 import frc.robot.lib.util.Vector2d;
 import frc.robot.subsystems.Shooter;
@@ -48,7 +49,7 @@ public class SumoAuto extends AutoModeBase {
         
         List<Action> driveAndCalibrate = new ArrayList<Action>();
         driveAndCalibrate.add(new CalibrateAction());
-        driveAndCalibrate.add(new DriveStraightAction(-48,-24,startPose.getHeadingDeg())); //Drive off line and push teammate (distance, velocity, heading)
+        driveAndCalibrate.add(new DriveStraightAction(-48,-24,Pigeon.getInstance().getHeadingDeg())); //Drive off line and push teammate (distance, velocity, heading)
         ParallelAction driveAndCalibrateAction = new ParallelAction(driveAndCalibrate);
         runAction(driveAndCalibrateAction);
     }

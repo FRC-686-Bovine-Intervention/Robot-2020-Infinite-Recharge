@@ -33,7 +33,7 @@ public class Pigeon extends GyroBase
         // constructors
         public Pigeon() 
         {
-                pigeon = new PigeonIMU(0);
+                pigeon = new PigeonIMU(25);
         }
 
         /**
@@ -51,7 +51,6 @@ public class Pigeon extends GyroBase
                 if(Math.abs(yaw) > 180){
                         yaw = Math.copySign(360-Math.abs(yaw), -yaw);
                 }
-
                 return yaw;
         }
 

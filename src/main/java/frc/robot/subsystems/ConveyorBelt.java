@@ -215,6 +215,7 @@ public class ConveyorBelt implements Loop
     @Override
     public void onStart(){
         //Do nothing?
+        storageCount=0;
     }
 
     @Override
@@ -225,8 +226,12 @@ public class ConveyorBelt implements Loop
                 stopHopper();
                 kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
                 conveyorMaster.set(ControlMode.PercentOutput, 0.0);
+            } else if(driverControls.getBoolean(DriverControlsEnum.REVERSE_BELTS)){
+                kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
+                conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
+                reverseHopper();   
+                storageCount = 0;             
             } else {
-
                 if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
                     kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
                     conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
@@ -245,27 +250,16 @@ public class ConveyorBelt implements Loop
                         stopHopper();
                         shooterChecked = Shooter.getInstance().nearTarget(true);
                     }
-                } else if(Intake.getInstance().getCurrentPower() > 0) {
+                } else {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount <= 3 && exitProximitySensor.get()){
+                    if(storageCount < 3 && exitProximitySensor.get()){
                         runHopper();
                         if(entranceEdge.update(!entranceProximitySensor.get())){
                             storageCount++;
                         }
                         if(!entranceProximitySensor.get()){
                             conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
-                        } else {
-                            conveyorMaster.set(ControlMode.PercentOutput, 0.0);
                         }
-                    }
-                } else {
-                    kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(entranceEdge.update(!entranceProximitySensor.get())){
-                        storageCount++;
-                    }
-                    if(storageCount <= 3 && !entranceProximitySensor.get() && exitProximitySensor.get()){
-                        conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
-                        runHopper();
                     } else {
                         conveyorMaster.set(ControlMode.PercentOutput, 0.0);
                         stopHopper();

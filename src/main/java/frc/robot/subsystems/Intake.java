@@ -51,7 +51,7 @@ public class Intake extends Subsystem implements Loop
     private IntakeState currentState = IntakeState.STORED;
     private boolean toggleLastState = false;
     private RisingEdgeDetector toggleDetector = new RisingEdgeDetector();
-    private static final double intakeCurrentThreshold = 6.0;
+    private static final double intakeCurrentThreshold = 25.0;
     private double reverseStartTime = 0;
     private static final double reverseTime = 1;
 
@@ -81,7 +81,7 @@ public class Intake extends Subsystem implements Loop
 
     @Override
     public void onLoop() {
-        if(!SmartDashboard.getBoolean("Lift/Debug", false)){
+        if(!SmartDashboard.getBoolean("Intake/Debug", false)){
             DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
             if(driverControls.getBoolean(DriverControlsEnum.RESET)){
                 retract();
@@ -142,15 +142,15 @@ public class Intake extends Subsystem implements Loop
 
     public void extendToFloor(){
         currentState = IntakeState.GROUND;
-        mainSolenoids.set(DoubleSolenoid.Value.kForward);
-        secondarySolenoids.set(DoubleSolenoid.Value.kForward);
+        mainSolenoids.set(DoubleSolenoid.Value.kReverse);
+        secondarySolenoids.set(DoubleSolenoid.Value.kReverse);
     }
 
     public void retract(){
         currentState = IntakeState.STORED;
         setPower(0.0);
-        mainSolenoids.set(DoubleSolenoid.Value.kReverse);
-        secondarySolenoids.set(DoubleSolenoid.Value.kReverse);
+        mainSolenoids.set(DoubleSolenoid.Value.kForward);
+        secondarySolenoids.set(DoubleSolenoid.Value.kForward);
     }
 
     public DoubleSolenoid.Value booleanToValue(boolean input){

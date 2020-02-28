@@ -361,6 +361,7 @@ public class Shooter implements Loop {
                     setTurretDeg(0.0);
                     setShooterRPM(0.0);
                     setHoodDeg(0.0);
+                    cState = ShooterState.IDLING;
                 }
             }
 

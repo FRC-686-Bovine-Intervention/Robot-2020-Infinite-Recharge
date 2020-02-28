@@ -27,7 +27,7 @@ public class Robot extends TimedRobot {
   Limelight camera = Limelight.getInstance();
   Pigeon pigeon = (Pigeon)Pigeon.getInstance();
 
-  //Drive drive = Drive.getInstance();
+  Drive drive = Drive.getInstance();
   //ControlPanel controlPanel;
 
   SmartDashboardInteractions smartDashboardInteractions = SmartDashboardInteractions.getInstance();
@@ -44,11 +44,11 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    // loopController.register(DriveLoop.getInstance());
-    // loopController.register(Intake.getInstance());
-    // loopController.register(ConveyorBelt.getInstance());
+    loopController.register(DriveLoop.getInstance());
+    loopController.register(Intake.getInstance());
+    loopController.register(ConveyorBelt.getInstance());
     loopController.register(Shooter.getInstance());
-    // loopController.register(Lift.getInstance());
+    loopController.register(Lift.getInstance());
 
 
     selectedDriverControls.setDriverControls( smartDashboardInteractions.getDriverControlsSelection() );
@@ -57,7 +57,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Shooter/Debug/SetTurretDeg", 0);
     SmartDashboard.putNumber("Shooter/Debug/SetHoodDeg", 0);
 
-    SmartDashboard.putBoolean("Shooter/Debug", true);
+    SmartDashboard.putBoolean("Shooter/Debug", false);
     SmartDashboard.putBoolean("Shooter/UpdatePID", false);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
     //controlPanel.setupColors();
@@ -157,7 +157,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
     loopController.run(); //To run the majority of the subsystems
-    //drive.setOpenLoop(selectedDriverControls.getDriveCommand());
+    drive.setOpenLoop(selectedDriverControls.getDriveCommand());
 
     //controlPanel.run();
   }
@@ -173,13 +173,13 @@ public class Robot extends TimedRobot {
   
   public void zeroAllSensors()
   {
-    //drive.zeroSensors();
+    drive.zeroSensors();
   }
   
   public void stopAll()
   {
     loopController.stop();
-    //drive.stop();
+    drive.stop();
   }
 
 

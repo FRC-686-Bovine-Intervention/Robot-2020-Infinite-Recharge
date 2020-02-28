@@ -60,13 +60,15 @@ public class DriverControlsThrustmasterRight extends DriverControlsBase
 
         switch (_control)
         {
-            case SHOOT:                         return !controller.getButton(Thrustmaster.kTopButton3) && controller.getButton(Thrustmaster.kTriggerButton) || controller.getButton(Thrustmaster.kBottomThumbButton);
-            case DRIVE_ASSIST:                  return controller.getButton(Thrustmaster.kLeftThumbButton);
-            case INTAKE_TOGGLE:                 return controller.getButton(Thrustmaster.kRightThumbButton);
-            case INTAKE_STORED:                 return controller.getButton(Thrustmaster.kTopButton5);
-            case LOCK_LIFT:                 return controller.getButton(Thrustmaster.kTopButton1);
-            case UNLOCK_LIFT:                 return controller.getButton(Thrustmaster.kTopButton2);
-            case TOGGLE_PTO:                 return controller.getButton(Thrustmaster.kTopButton4);
+            case SHOOT:                         return controller.getButton(Thrustmaster.kTriggerButton);
+            case DRIVE_ASSIST:                  return false;
+            case INTAKE_TOGGLE:                 return controller.getButton(Thrustmaster.kBottomThumbButton);
+            case INTAKE_STORED:                 return buttonBoard.getButton(ButtonBoard.kButtonRB);
+            case LOCK_LIFT:                     return buttonBoard.getButton(ButtonBoard.kButtonY);
+            case UNLOCK_LIFT:                   return buttonBoard.getButton(ButtonBoard.kButtonX);
+            case TOGGLE_PTO:                    return controller.getButton(Thrustmaster.kBottomButton6);
+            case CALIBRATE:                     return buttonBoard.getButton(ButtonBoard.kButtonA);
+            case RESET:                         return buttonBoard.getButton(ButtonBoard.kButtonB);
             case QUICK_TURN:                    return false;
             default:                            return false;
         }

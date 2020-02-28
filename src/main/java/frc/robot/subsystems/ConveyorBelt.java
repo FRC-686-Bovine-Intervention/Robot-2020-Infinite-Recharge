@@ -229,7 +229,7 @@ public class ConveyorBelt implements Loop
 
                 if(shootDetector.update(driverControls.getBoolean(DriverControlsEnum.SHOOT))){
                     kickerMotorMaster.set(ControlMode.PercentOutput, Constants.kKickerShootPercent);
-                    conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorBackUpPercent);
+                    conveyorMaster.set(ControlMode.PercentOutput, -Constants.kConveyorBackUpPercent);
                     backupStartTime = Timer.getFPGATimestamp();
                 }
                 if(Timer.getFPGATimestamp()-backupStartTime >= backupSeconds && !shooterChecked){
@@ -247,21 +247,25 @@ public class ConveyorBelt implements Loop
                     }
                 } else if(Intake.getInstance().getCurrentPower() > 0) {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount < 3 && exitProximitySensor.get()){
+                    if(storageCount <= 3 && exitProximitySensor.get()){
                         runHopper();
-                        if(entranceEdge.update(entranceProximitySensor.get())){
-                            conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                        if(entranceEdge.update(!entranceProximitySensor.get())){
                             storageCount++;
+                        }
+                        if(!entranceProximitySensor.get()){
+                            conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
                         } else {
                             conveyorMaster.set(ControlMode.PercentOutput, 0.0);
                         }
                     }
                 } else {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.get()) && exitProximitySensor.get()){
+                    if(entranceEdge.update(!entranceProximitySensor.get())){
+                        storageCount++;
+                    }
+                    if(storageCount <= 3 && !entranceProximitySensor.get() && exitProximitySensor.get()){
                         conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
                         runHopper();
-                        storageCount++;
                     } else {
                         conveyorMaster.set(ControlMode.PercentOutput, 0.0);
                         stopHopper();
@@ -303,7 +307,7 @@ public class ConveyorBelt implements Loop
             conveyorMaster.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetTowerPercent", 0));
 
             SmartDashboard.putBoolean("Conveyor/Debug/EntranceSensor", entranceProximitySensor.get());
-            SmartDashboard.putBoolean("Conveyor/Debug/EntranceSensor", exitProximitySensor.get());
+            SmartDashboard.putBoolean("Conveyor/Debug/ExitSensor", exitProximitySensor.get());
 
             
             

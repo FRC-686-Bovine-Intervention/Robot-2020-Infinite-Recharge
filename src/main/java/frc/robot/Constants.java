@@ -69,8 +69,8 @@ public class Constants extends ConstantsBase {
     public static double kIntakePower = 1.0;
     public static double kConveyorFeedIPS = 7; //Inches per sec, feed rate of the tower
 
-    public static double kConveyorFeedPercent = .5;
-    public static double kConveyorBackUpPercent = 0.25;
+    public static double kConveyorFeedPercent = 0.5;
+    public static double kConveyorBackUpPercent = 0.5;
     public static double kKickerShootPercent = 0.75;
 
     public static double kConveyorBackupDist = 3;

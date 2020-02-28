@@ -90,7 +90,7 @@ public class Shooter implements Loop {
     public final int kSliderMax = 200;
 
     public static double targetRPM = 0;
-    public static double kRPMErrorShooting = 360.0, kRPMErrorStopping = 20.0;
+    public static double kRPMErrorShooting = 100.0, kRPMErrorStopping = 20.0;
 
 
     //Variables for Target Location and Shooter build =======================
@@ -576,7 +576,11 @@ public class Shooter implements Loop {
 
     public boolean nearTarget(boolean shooting){
         if (shooting){
-            return getSpeedError() < kRPMErrorShooting;
+            if(!Limelight.getInstance().getIsTargetFound()){
+                return false;
+            } else {
+                return getSpeedError() < kRPMErrorShooting;
+            }
         } else {
             return getSpeedError() <kRPMErrorStopping;
         }

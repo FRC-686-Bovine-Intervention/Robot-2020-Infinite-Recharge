@@ -8,6 +8,7 @@ import frc.robot.Constants;
 import frc.robot.lib.joystick.DriverControlsBase;
 import frc.robot.lib.joystick.DriverControlsEnum;
 import frc.robot.lib.joystick.SelectedDriverControls;
+import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.loops.Loop;
 
 public class Lift extends Subsystem implements Loop {
@@ -24,8 +25,10 @@ public class Lift extends Subsystem implements Loop {
 
     private boolean PTOLastState = false;
 
-    private boolean driveActiveVal = true; //What value the solenoid is at when drive is activated
+    private boolean driveActiveVal = false; //What value the solenoid is at when drive is activated
     private boolean lockActiveVal = false; //The value activates the lock
+
+    private RisingEdgeDetector PTOToggleEdge = new RisingEdgeDetector();
     
     public enum PTOTansmissionState {
         DRIVE_ENABLED, LIFT_ENABLED
@@ -57,7 +60,8 @@ public class Lift extends Subsystem implements Loop {
     public void onLoop() {
         if(!SmartDashboard.getBoolean("Lift/Debug", false)){
             DriverControlsBase driverControls = SelectedDriverControls.getInstance().get();
-            if(driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO) && !PTOLastState){
+
+            if(PTOToggleEdge.update(driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO))){
                 if(cPTOState == PTOTansmissionState.DRIVE_ENABLED){
                     shiftToLift();
                     unlockLift();
@@ -66,7 +70,6 @@ public class Lift extends Subsystem implements Loop {
                     lockLift();
                 }
             }
-            PTOLastState = driverControls.getBoolean(DriverControlsEnum.TOGGLE_PTO);
 
             if(driverControls.getBoolean(DriverControlsEnum.LOCK_LIFT)) {
                 lockLift();

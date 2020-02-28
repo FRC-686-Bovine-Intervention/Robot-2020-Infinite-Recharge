@@ -61,7 +61,7 @@ public class Intake extends Subsystem implements Loop
     public Intake(){
         intakeMotor = new TalonSRX(Constants.kIntakeTalonId);
         intakeMotor.configFactoryDefault();
-        intakeMotor.setInverted(true);
+        intakeMotor.setInverted(false);
 
         mainSolenoids = new DoubleSolenoid(Constants.kPCMID, Constants.kMainSolenoidFChannel, Constants.kMainSolenoidRChannel);
         secondarySolenoids = new DoubleSolenoid(Constants.kPCMID, Constants.kSecondarySolenoidFChannel, Constants.kSecondarySolenoidRChannel);

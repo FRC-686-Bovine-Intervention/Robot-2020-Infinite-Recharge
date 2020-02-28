@@ -20,12 +20,12 @@ public class Lift extends Subsystem implements Loop {
         return instance;
     }
 
-    private Solenoid PTOSolenoid1, PTOSolenoid2, lockSolenoid1, lockSolenoid2;
+    private Solenoid PTOSolenoids, lockSolenoids;
 
     private boolean PTOLastState = false;
 
     private boolean driveActiveVal = true; //What value the solenoid is at when drive is activated
-    private boolean lockActiveVal = true; //The value activates the lock
+    private boolean lockActiveVal = false; //The value activates the lock
     
     public enum PTOTansmissionState {
         DRIVE_ENABLED, LIFT_ENABLED
@@ -35,10 +35,8 @@ public class Lift extends Subsystem implements Loop {
 
 
     public Lift(){
-        PTOSolenoid1 = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoid1Channel);
-        PTOSolenoid2 = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoid2Channel);
-        lockSolenoid1 = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoid1Channel);
-        lockSolenoid2 = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoid2Channel);
+        PTOSolenoids = new Solenoid(Constants.kPCMID, Constants.kPTOSolenoidChannel);
+        lockSolenoids = new Solenoid(Constants.kPCMID, Constants.kLiftLockSolenoidChannel);
 
         lockLift();
         shiftToDrive();
@@ -51,6 +49,8 @@ public class Lift extends Subsystem implements Loop {
     @Override
     public void onStart() {
         stop();
+        shiftToDrive();
+        lockLift();
     }
 
     @Override
@@ -74,10 +74,8 @@ public class Lift extends Subsystem implements Loop {
                 unlockLift();
             }
         } else {
-            PTOSolenoid1.set(SmartDashboard.getBoolean("Lift/Debug/PTOSolenoids", false));
-            PTOSolenoid2.set(SmartDashboard.getBoolean("Lift/Debug/PTOSolenoids", false));
-            lockSolenoid1.set(SmartDashboard.getBoolean("Lift/Debug/LockSolenoids", false));
-            lockSolenoid2.set(SmartDashboard.getBoolean("Lift/Debug/LockSolenoids", false));
+            PTOSolenoids.set(SmartDashboard.getBoolean("Lift/Debug/PTOSolenoids", false));
+            lockSolenoids.set(SmartDashboard.getBoolean("Lift/Debug/LockSolenoids", false));
         }
     }
 
@@ -99,24 +97,20 @@ public class Lift extends Subsystem implements Loop {
 
 
     public void lockLift(){
-        lockSolenoid1.set(lockActiveVal);
-        lockSolenoid2.set(lockActiveVal);
+        lockSolenoids.set(lockActiveVal);
     }
 
     public void unlockLift(){
-        lockSolenoid1.set(!lockActiveVal);
-        lockSolenoid2.set(!lockActiveVal);
+        lockSolenoids.set(!lockActiveVal);
     }
 
     public void shiftToDrive(){
-        PTOSolenoid1.set(driveActiveVal);
-        PTOSolenoid2.set(driveActiveVal);
+        PTOSolenoids.set(driveActiveVal);
         cPTOState = PTOTansmissionState.DRIVE_ENABLED;
     }
 
     public void shiftToLift(){
-        PTOSolenoid1.set(!driveActiveVal);
-        PTOSolenoid2.set(!driveActiveVal);
+        PTOSolenoids.set(!driveActiveVal);
         cPTOState = PTOTansmissionState.LIFT_ENABLED;
     }
 

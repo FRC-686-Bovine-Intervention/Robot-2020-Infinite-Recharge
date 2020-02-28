@@ -30,7 +30,7 @@ public class Constants extends ConstantsBase {
 
 
     // Hardware Port Definitions
-    public static int kPCMID =                      01;
+    public static int kPCMID =                      0;
     public static int kRightMotorMasterTalonId =    11;
     public static int kRightMotorSlave1TalonId =    12;
     public static int kLeftMotorMasterTalonId =     13;
@@ -43,8 +43,8 @@ public class Constants extends ConstantsBase {
     public static int kConveyorHopperLeftId =       25;
     public static int kConveyorKickerMasterID=      26;
     public static int kConveyorKickerSlaveID=       27;
-    public static int kEntranceProximityID =        0;
-    public static int kExitProximityID =            1;
+    public static int kEntranceProximityID =        1;
+    public static int kExitProximityID =            2;
 
 
     public static int kShooterTalonId =             31;
@@ -56,19 +56,17 @@ public class Constants extends ConstantsBase {
     public static int kPanelMasterId =              41;
 
 
-    public static int kMainSolenoidFChannel =       0;
-    public static int kMainSolenoidRChannel =       1;
-    public static int kSecondarySolenoidFChannel =  2;
-    public static int kSecondarySolenoidRChannel =  3;
-    public static int kPTOSolenoid1Channel =        4;
-    public static int kPTOSolenoid2Channel =        5;
-    public static int kLiftLockSolenoid1Channel =   6;
-    public static int kLiftLockSolenoid2Channel =   7;   
+    public static int kMainSolenoidFChannel =       7; //
+    public static int kMainSolenoidRChannel =       5; //
+    public static int kSecondarySolenoidFChannel =  6; //
+    public static int kSecondarySolenoidRChannel =  4; //
+    public static int kPTOSolenoidChannel =        3; //
+    public static int kLiftLockSolenoidChannel =   2; //
 
 
 
 
-    public static double kIntakePower = 0.5;
+    public static double kIntakePower = 1.0;
     public static double kConveyorFeedIPS = 7; //Inches per sec, feed rate of the tower
 
     public static double kConveyorFeedPercent = .5;

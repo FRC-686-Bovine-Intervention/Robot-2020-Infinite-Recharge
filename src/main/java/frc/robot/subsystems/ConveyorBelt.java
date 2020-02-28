@@ -8,6 +8,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.VictorSPX;
 
 import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.lib.joystick.DriverControlsEnum;
@@ -33,8 +34,9 @@ public class ConveyorBelt implements Loop
     }
 
     //public TalonSRX conveyorMaster, kickerMotor;
-    public VictorSPX conveyorSlave, leftHopperMotor, rightHopperMotor, conveyorMaster, kickerMotorMaster, kickerMotorSlave;
-    public AnalogInput entranceProximitySensor, exitProximitySensor;
+    public VictorSPX conveyorSlave, rightHopperMotor, conveyorMaster, kickerMotorMaster, kickerMotorSlave;
+    public DigitalInput entranceProximitySensor, exitProximitySensor;
+    public TalonSRX leftHopperMotor;
 
 	
     public static final int kSlotIdxSpeed = 0;
@@ -97,8 +99,8 @@ public class ConveyorBelt implements Loop
 
     public ConveyorBelt() 
     {
-        entranceProximitySensor = new AnalogInput(Constants.kEntranceProximityID);
-        exitProximitySensor = new AnalogInput(Constants.kExitProximityID);
+        entranceProximitySensor = new DigitalInput(Constants.kEntranceProximityID);
+        exitProximitySensor = new DigitalInput(Constants.kExitProximityID);
 
         // conveyorMaster = new TalonSRX(Constants.kConveyorbeltMasterID);
         // kickerMotor = new TalonSRX(Constants.kConveyorKickerID);
@@ -106,7 +108,7 @@ public class ConveyorBelt implements Loop
         kickerMotorSlave = new VictorSPX(Constants.kConveyorKickerSlaveID);
         conveyorMaster = new VictorSPX(Constants.kConveyorbeltMasterID);
         conveyorSlave = new VictorSPX(Constants.kConveyorbeltSlaveID);
-        leftHopperMotor = new VictorSPX(Constants.kConveyorHopperLeftId);
+        leftHopperMotor = new TalonSRX(Constants.kConveyorHopperLeftId);
         rightHopperMotor = new VictorSPX(Constants.kConveyorHopperRightID);
 
 
@@ -116,6 +118,11 @@ public class ConveyorBelt implements Loop
         rightHopperMotor.configFactoryDefault();
         kickerMotorMaster.configFactoryDefault();
         kickerMotorSlave.configFactoryDefault();
+
+        conveyorMaster.setInverted(true);
+        kickerMotorMaster.setInverted(true);
+        rightHopperMotor.setInverted(true);
+        leftHopperMotor.setInverted(true);
 
 
         // conveyorMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);
@@ -157,7 +164,7 @@ public class ConveyorBelt implements Loop
         conveyorSlave.setInverted(false);
 
         kickerMotorSlave.follow(kickerMotorMaster);
-        kickerMotorSlave.setInverted(true);
+        kickerMotorSlave.setInverted(false);
 
 
         // //===============
@@ -240,9 +247,9 @@ public class ConveyorBelt implements Loop
                     }
                 } else if(Intake.getInstance().getCurrentPower() > 0) {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount < 3 && exitProximitySensor.getValue()<127){
+                    if(storageCount < 3 && exitProximitySensor.get()){
                         runHopper();
-                        if(entranceEdge.update(entranceProximitySensor.getValue()<127)){
+                        if(entranceEdge.update(entranceProximitySensor.get())){
                             conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
                             storageCount++;
                         } else {
@@ -251,7 +258,7 @@ public class ConveyorBelt implements Loop
                     }
                 } else {
                     kickerMotorMaster.set(ControlMode.PercentOutput, 0.0);
-                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.getValue()<127) && exitProximitySensor.getValue()<127){
+                    if(storageCount <3 && entranceEdge.update(entranceProximitySensor.get()) && exitProximitySensor.get()){
                         conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
                         runHopper();
                         storageCount++;
@@ -294,6 +301,10 @@ public class ConveyorBelt implements Loop
             kickerMotorMaster.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetKickerPercent", 0));
 
             conveyorMaster.set(ControlMode.PercentOutput, SmartDashboard.getNumber("Conveyor/Debug/SetTowerPercent", 0));
+
+            SmartDashboard.putBoolean("Conveyor/Debug/EntranceSensor", entranceProximitySensor.get());
+            SmartDashboard.putBoolean("Conveyor/Debug/EntranceSensor", exitProximitySensor.get());
+
             
             
             // //Outputting Sensor Data:

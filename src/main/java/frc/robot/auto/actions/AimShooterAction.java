@@ -17,11 +17,13 @@ public class AimShooterAction implements Action {
 
     private double backupAngle; //This is used in the event that a target can not be found
     private int sensingAttempts = 0; //Tracks attempts
-    private static int maxAttempts = 5;
+    private static int maxAttempts = 20;
 
     private static double pCorrection = 0.5; //Used for angle correction. Proportional
     private static double toleranceRads = 0.075; //Allowable error in radians
     public Vector2d lastTargetPos = null;
+    public int successfulLoop = 0;
+    public static int requiredLoops = 20;
 
     
     public AimShooterAction(double suggestedDeg) {
@@ -36,7 +38,10 @@ public class AimShooterAction implements Action {
         //Somewhat outdated....
         if(backupAngle != 0){
             shooter.setTurretAbsDeg(backupAngle); //Start by looking in the general direction
+        } else {
+            shooter.setTurretDeg(shooter.getTurretAngleRad());
         }
+
     }
 
     @Override
@@ -52,14 +57,19 @@ public class AimShooterAction implements Action {
             lastTargetPos = targetPos; //Updating this for external functions
             //First see if we are close enough:
             double cTurretAngle = shooter.getTurretAngleRad();
-            double errorRad = targetPos.angle()-(cTurretAngle+(Math.PI/2.0)); //Should output positive if CCW correction is needed
+            double errorRad = limelight.getTargetHorizontalAngleRad(); //Should output positive if CCW correction is needed
             if(Math.abs(errorRad) <= toleranceRads){
+                successfulLoop++;
+            } else {
+                successfulLoop = 0;
+            }
+            if(Math.abs(errorRad) <= toleranceRads && successfulLoop >= requiredLoops){
                 finished = true;
                 return; //Exit action
             }
             //Otherwise...
-            double correction = errorRad*pCorrection; //Assumes positive means leftwards correction
-            shooter.setTurretAbsDeg(Math.toDegrees(cTurretAngle+correction)); //Adjusting turret
+            double correction = errorRad/2; //Assumes positive means leftwards correction
+            shooter.setTurretDeg(Math.toDegrees(cTurretAngle+correction)); //Adjusting turret
         }
     }
 

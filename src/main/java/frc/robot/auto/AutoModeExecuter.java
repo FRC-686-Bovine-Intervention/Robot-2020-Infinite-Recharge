@@ -22,7 +22,6 @@ public class AutoModeExecuter
 
     public void start() 
     {
-
         if (autoThread == null) 
         {
             autoThread = new Thread(new CrashTrackingRunnable() 

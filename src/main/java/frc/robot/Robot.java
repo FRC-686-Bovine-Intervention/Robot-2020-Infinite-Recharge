@@ -7,6 +7,7 @@ import frc.robot.auto.AutoModeExecuter;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
+import frc.robot.lib.sensors.Limelight.LedMode;
 import frc.robot.lib.util.DataLogController;
 import frc.robot.lib.util.DataLogger;
 import frc.robot.lib.util.FallingEdgeDetector;
@@ -41,6 +42,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
+    Limelight.getInstance().setLEDMode(LedMode.kOff);
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
@@ -57,11 +59,6 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Shooter/Debug/SetTurretDeg", 0);
     SmartDashboard.putNumber("Shooter/Debug/SetHoodDeg", 0);
 
-    SmartDashboard.putBoolean("Pigeon/Debug", false);
-    SmartDashboard.putNumber("Pigeon/HeadingDeg", 0);
-    SmartDashboard.putBoolean("Pigeon/Debug/ZeroHeading", false);
-    SmartDashboard.putNumber("Pigeon/Debug/SetInitCondition", 0);
-
     SmartDashboard.putBoolean("Shooter/Debug", false);
     SmartDashboard.putBoolean("Shooter/UpdatePID", false);
     SmartDashboard.putBoolean("ControlPanel/Debug", false);
@@ -76,13 +73,6 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     //loopController.run();	
-    SmartDashboard.putNumber("Pigeon/HeadingDeg", pigeon.getHeadingDeg());
-    if(SmartDashboard.getBoolean("Pigeon/Debug", false)){
-      if(SmartDashboard.getBoolean("Pigeon/Debug/ZeroHeading", false)){
-        pigeon.zeroSensor();
-      }
-      pigeon.setInitCondition(SmartDashboard.getNumber("Pigeon/Debug/SetInitCondition", 0));
-    }
 
     if(testLoopEdge.update(testLoopCheck)){
       Shooter.getInstance().resetForCalibration();
@@ -134,7 +124,7 @@ public class Robot extends TimedRobot {
 
     pigeon.zeroHeading(smartDashboardInteractions.getSelectedStartPose().getHeadingDeg()); //Setting up gyro with initial conditions
 
-    loopController.start();
+    //loopController.start();
 		Shuffleboard.startRecording();
 
     camera.autoInit();

@@ -10,6 +10,7 @@ import frc.robot.auto.actions.Action;
 import frc.robot.auto.actions.AimShooterAction;
 import frc.robot.auto.actions.CalibrateAction;
 import frc.robot.auto.actions.DriveStraightAction;
+import frc.robot.auto.actions.DriveToTime;
 import frc.robot.auto.actions.FeedBallsAction;
 import frc.robot.auto.actions.ParallelAction;
 import frc.robot.auto.actions.SpeedUpShooterAction;
@@ -27,6 +28,7 @@ public class SumoAuto extends AutoModeBase {
 
     @Override
     protected void routine() throws AutoModeEndedException {
+        System.out.println("Hello2!!! \n Hello~~~~~");
         SmartDashboardInteractions  smartDashboard = SmartDashboardInteractions.getInstance();
         Pose startPose = smartDashboard.getSelectedStartPose();
         double startDelaySec = smartDashboard.getStartDelay();
@@ -42,6 +44,7 @@ public class SumoAuto extends AutoModeBase {
             runAction(new SpeedUpShooterAction(targetPos.length()));
         } else {
             runAction(new SpeedUpShooterAction(backUpTargetPos.length()));
+            //runAction(new SpeedUpShooterAction(backUpTargetPos.length()));
         }
         runAction(new FeedBallsAction(4));
         shooter.setShooterRPM(0.0);
@@ -49,7 +52,7 @@ public class SumoAuto extends AutoModeBase {
         
         List<Action> driveAndCalibrate = new ArrayList<Action>();
         driveAndCalibrate.add(new CalibrateAction());
-        driveAndCalibrate.add(new DriveStraightAction(-48,-24,Pigeon.getInstance().getHeadingDeg())); //Drive off line and push teammate (distance, velocity, heading)
+        driveAndCalibrate.add(new DriveToTime(0.75, 2.5) ); //Drive off line and push teammate
         ParallelAction driveAndCalibrateAction = new ParallelAction(driveAndCalibrate);
         runAction(driveAndCalibrateAction);
     }

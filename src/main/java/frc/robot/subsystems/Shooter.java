@@ -90,7 +90,7 @@ public class Shooter implements Loop {
     public final int kSliderMax = 200;
 
     public static double targetRPM = 0;
-    public static double kRPMErrorShooting = 100.0, kRPMErrorStopping = 20.0;
+    public static double kRPMErrorShooting = 350.0, kRPMErrorStopping = 20.0;
 
 
     //Variables for Target Location and Shooter build =======================
@@ -576,11 +576,8 @@ public class Shooter implements Loop {
 
     public boolean nearTarget(boolean shooting){
         if (shooting){
-            if(!Limelight.getInstance().getIsTargetFound()){
-                return false;
-            } else {
-                return getSpeedError() < kRPMErrorShooting;
-            }
+            return getSpeedError() < kRPMErrorShooting;
+            
         } else {
             return getSpeedError() <kRPMErrorStopping;
         }
@@ -677,7 +674,10 @@ public class Shooter implements Loop {
 
     public double getTargetShooterVelocity(double distance){
         //This is more useful for autonomous
-        return (getTargetBallVelMag(distance)/(0.5*shooterWheelRadius))*(30.0/Math.PI);
+        int keyL = getLinear(distance, dataTable);
+        double nominalSpeed = handleLinear(distance, dataTable[keyL][0], dataTable[keyL+1][0], dataTable[keyL][1], dataTable[keyL+1][1]);
+
+        return nominalSpeed;
     }
 
     public double getTurretAngleRad(){

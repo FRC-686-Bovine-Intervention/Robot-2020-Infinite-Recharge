@@ -16,7 +16,7 @@ public class SpeedUpShooterAction implements Action {
     private double targetDistance;
     private double targetRPM;
     private double startTime;
-    private static final double reverseTime = 1.0, minimumTime = reverseTime+0.5;
+    private static final double reverseTime = 0.5, minimumTime = reverseTime+0.5;
 
 
 
@@ -26,8 +26,11 @@ public class SpeedUpShooterAction implements Action {
 
     @Override
     public void start() {
-        targetRPM = shooter.getTargetShooterVelocity(targetDistance)*(30.0/Math.PI);
+        targetRPM = shooter.getTargetShooterVelocity(targetDistance);
+        double hoodDeg = shooter.calcHoodPosition(targetDistance);
+
         shooter.setShooterRPM(targetRPM);
+        shooter.setHoodDeg(hoodDeg);
 
         conveyorBelt.runKicker();
         conveyorBelt.reverseTower();

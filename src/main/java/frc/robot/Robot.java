@@ -1,5 +1,14 @@
 package frc.robot;
 
+import java.io.OutputStream;
+
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +34,7 @@ public class Robot extends TimedRobot {
 
 	VisionDriveAssistant visionDriveAssistant = VisionDriveAssistant.getInstance();
   Limelight camera = Limelight.getInstance();
+  UsbCamera climUsbCamera = CameraServer.getInstance().startAutomaticCapture();
   Pigeon pigeon = (Pigeon)Pigeon.getInstance();
 
   Drive drive = Drive.getInstance();
@@ -107,7 +117,7 @@ public class Robot extends TimedRobot {
 	{
 			stopAll(); // stop all actuators
 
-			camera.disabledPeriodic();
+      camera.disabledPeriodic();
 	}
 
 
@@ -150,6 +160,21 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
     loopController.start();
     camera.teleopInit();
+    climUsbCamera.setResolution(640,480);
+
+    CvSink cvSink = CameraServer.getInstance().getVideo();
+    CvSource climberVideo = CameraServer.getInstance().putVideo("climber view", 640, 480);
+
+    Mat source = new Mat();
+    Mat output = new Mat();
+
+    while(!Thread.interrupted()){
+      if (cvSink.grabFrame(source) == 0){
+        continue;
+      }
+      Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+      climberVideo.putFrame(output);
+    }
   }
   
 

@@ -90,7 +90,7 @@ public class ConveyorBelt implements Loop
     public int storageCount = 0;
     private RisingEdgeDetector entranceEdge = new RisingEdgeDetector();
     private double backupStartTime = 0;
-    private static final double backupSeconds = 1;
+    private static final double backupSeconds = 0.5;
 
 
 
@@ -259,6 +259,8 @@ public class ConveyorBelt implements Loop
                         }
                         if(!entranceProximitySensor.get()){
                             conveyorMaster.set(ControlMode.PercentOutput, Constants.kConveyorFeedPercent);
+                        } else {
+                            conveyorMaster.set(ControlMode.PercentOutput, 0.0);
                         }
                     } else {
                         conveyorMaster.set(ControlMode.PercentOutput, 0.0);

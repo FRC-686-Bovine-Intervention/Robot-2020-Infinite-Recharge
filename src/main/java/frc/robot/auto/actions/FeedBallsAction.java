@@ -10,7 +10,7 @@ public class FeedBallsAction implements Action {
 
     private int numberOfBalls; 
     private boolean finished;
-    private static final double timePerBall = 1.5;
+    private static final double timePerBall = 1;
     private double startTime = 0;
 
 

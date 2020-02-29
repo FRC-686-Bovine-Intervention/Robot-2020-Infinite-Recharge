@@ -92,18 +92,10 @@ public class Intake extends Subsystem implements Loop
                 if(Timer.getFPGATimestamp()-reverseStartTime < reverseTime){
                     setPower(-Constants.kIntakePower);
                 } else {
-                    if (toggleDetector.update(driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE))){
-                        if(currentState == IntakeState.STORED){
-                            //Toggle to floor
-                            extendToFloor();
-                            setPower(Constants.kIntakePower);
-                        } else if(currentState == IntakeState.GROUND){
-                            //Toggle to stored
-                            retract();
-                        }
-                    }
-                    else if (driverControls.getBoolean(DriverControlsEnum.INTAKE_STORED))
-                    {
+                    if (driverControls.getBoolean(DriverControlsEnum.INTAKE_TOGGLE)){
+                        extendToFloor();
+                        setPower(Constants.kIntakePower);
+                    } else {
                         retract();
                     }
                 }

@@ -36,6 +36,7 @@ public class DriveToTime implements Action {
 
         if(Timer.getFPGATimestamp()-startTime >= time){
             finished = true;
+            mDrive.setOpenLoop(new DriveCommand(0,0));
         }
     }
 
@@ -46,7 +47,6 @@ public class DriveToTime implements Action {
 
     @Override
     public void done() {
-        mDrive.setOpenLoop(new DriveCommand(0,0));
     }
 
     private final DataLogger logger = new DataLogger()

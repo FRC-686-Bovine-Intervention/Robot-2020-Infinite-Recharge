@@ -46,13 +46,13 @@ public class SumoAuto extends AutoModeBase {
             runAction(new SpeedUpShooterAction(backUpTargetPos.length()));
             //runAction(new SpeedUpShooterAction(backUpTargetPos.length()));
         }
-        runAction(new FeedBallsAction(4));
+        runAction(new FeedBallsAction(3));
         shooter.setShooterRPM(0.0);
 
         
         List<Action> driveAndCalibrate = new ArrayList<Action>();
         driveAndCalibrate.add(new CalibrateAction());
-        driveAndCalibrate.add(new DriveToTime(0.75, 2.5) ); //Drive off line and push teammate
+        driveAndCalibrate.add(new DriveToTime(0.25, 1) ); //Drive off line and push teammate
         ParallelAction driveAndCalibrateAction = new ParallelAction(driveAndCalibrate);
         runAction(driveAndCalibrateAction);
     }

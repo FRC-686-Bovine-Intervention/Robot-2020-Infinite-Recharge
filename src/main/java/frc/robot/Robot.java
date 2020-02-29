@@ -1,9 +1,19 @@
 package frc.robot;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+
+import org.opencv.core.Mat;
+
+import edu.wpi.cscore.CvSink;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.cameraserver.CameraServer;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.auto.AutoModeExecuter;
+import frc.robot.command_status.DriveCommand;
 import frc.robot.lib.joystick.SelectedDriverControls;
 import frc.robot.lib.sensors.Limelight;
 import frc.robot.lib.sensors.Pigeon;
@@ -38,6 +48,7 @@ public class Robot extends TimedRobot {
 
   boolean testLoopCheck = false;
   FallingEdgeDetector testLoopEdge = new FallingEdgeDetector();
+  UsbCamera climbUsbCam = CameraServer.getInstance().startAutomaticCapture();
 
 
   @Override
@@ -46,7 +57,7 @@ public class Robot extends TimedRobot {
     //controlPanel = ControlPanel.getInstance();
 
     loopController = new LoopController();
-    loopController.register(DriveLoop.getInstance());
+    //loopController.register(DriveLoop.getInstance());
     loopController.register(Intake.getInstance());
     loopController.register(ConveyorBelt.getInstance());
     loopController.register(Shooter.getInstance());
@@ -122,7 +133,7 @@ public class Robot extends TimedRobot {
     boolean logToSmartDashboard = true;
     robotLogger.setOutputMode(logToFile, logToSmartDashboard);
 
-    pigeon.zeroHeading(smartDashboardInteractions.getSelectedStartPose().getHeadingDeg()); //Setting up gyro with initial conditions
+    //pigeon.zeroHeading(smartDashboardInteractions.getSelectedStartPose().getHeadingDeg()); //Setting up gyro with initial conditions
 
     //loopController.start();
 		Shuffleboard.startRecording();
@@ -145,6 +156,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
+    DriveLoop.getInstance().onLoop();
   }
 
 
@@ -153,23 +165,43 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
     loopController.start();
     camera.teleopInit();
+    //climbUsbCam
+    CvSink cvSink = CameraServer.getInstance().getVideo();
+    CvSource cvSource = CameraServer.getInstance().putVideo("front camera view", 640, 480);
+
+    Mat output = new Mat();
+    Mat source = new Mat();
+
+    while(!Thread.interrupted()){
+      if(cvSink.grabFrame(source) == 0){
+        continue;
+      }
+    }
+
+    cvSource.putFrame(output);
+  
+    System.out.println("teleInit");
   }
   
 
 
   @Override
   public void teleopPeriodic() {
-    loopController.run(); //To run the majority of the subsystems
-    drive.setOpenLoop(selectedDriverControls.getDriveCommand());
-
+    System.out.println("telePer");
+    // loopController.run(); //To run the majority of the subsystems
+    // System.out.println("Hello!");
+    // drive.setOpenLoop(selectedDriverControls.getDriveCommand());
+    // System.out.println(selectedDriverControls.getDriveCommand().getLeftMotor()); 
+    // DriveLoop.getInstance().onLoop();
     //controlPanel.run();
   }
 
   
-
   @Override
   public void testPeriodic() {
     //Calibrating shooter!
+    //drive.setOpenLoop(new DriveCommand(.5,.5));
+    //DriveLoop.getInstance().onLoop();
     Shooter.getInstance().calibrate();
     testLoopCheck = true;
   }

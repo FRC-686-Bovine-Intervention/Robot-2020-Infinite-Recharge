@@ -415,7 +415,8 @@ public class DriveLoop implements Loop
         	case PercentOutput:
         		// DriveCommand given in range +/-1, with 1 representing full throttle
         		lMotorMaster.set(ControlMode.PercentOutput, lMotorCtrl);
-        		rMotorMaster.set(ControlMode.PercentOutput, rMotorCtrl);
+				rMotorMaster.set(ControlMode.PercentOutput, rMotorCtrl);
+				System.out.println(lMotorCtrl);
         		break;
 
         	case Position:

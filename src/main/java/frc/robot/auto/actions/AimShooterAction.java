@@ -64,8 +64,8 @@ public class AimShooterAction implements Action {
                 successfulLoop = 0;
             }
             if(Math.abs(errorRad) <= toleranceRads && successfulLoop >= requiredLoops){
-                finished = true;
-                return; //Exit action
+                // finished = true;
+                // return; //Exit action
             }
             //Otherwise...
             double correction = errorRad/2; //Assumes positive means leftwards correction

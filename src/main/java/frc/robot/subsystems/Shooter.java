@@ -26,6 +26,7 @@ import frc.robot.lib.util.RisingEdgeDetector;
 import frc.robot.lib.util.Kinematics.LinearAngularSpeed;
 import frc.robot.lib.util.Vector2d;
 import frc.robot.loops.Loop;
+import frc.robot.subsystems.Lift.PTOTansmissionState;
 
 public class Shooter implements Loop {
     // singleton class
@@ -128,8 +129,8 @@ public class Shooter implements Loop {
     
     //Target Tracking Variables
     public int targetLostCount = 0; //This is used to provide a buffer before searching for the target
-    public static final int maxLostCountShooting = 5;
-    public static final int maxLostCountTracking = 10;
+    public static final int maxLostCountShooting = 15;
+    public static final int maxLostCountTracking = 20;
     public Vector2d lastTargetPos = null;
 
     public double targetAdjustRads = 0; //Used in the Readjusting state in order to return to the original absolute position
@@ -290,7 +291,7 @@ public class Shooter implements Loop {
                 resetForCalibration();
             }
 
-            if(driverControls.getBoolean(DriverControlsEnum.RESET)){
+            if(driverControls.getBoolean(DriverControlsEnum.RESET) || Lift.getInstance().getPTOState() == PTOTansmissionState.LIFT_ENABLED){
                 Limelight.getInstance().setLEDMode(LedMode.kOff);
                 cState = ShooterState.IDLING;
             } else if(driverControls.getBoolean(DriverControlsEnum.CALIBRATE) || cState == ShooterState.CALIBRATING){
@@ -449,6 +450,7 @@ public class Shooter implements Loop {
             //Manual controls:
             setShooterRPM(SmartDashboard.getNumber("Shooter/Debug/SetShooterRPM", 0));
 
+            Limelight.getInstance().setLEDMode(LedMode.kOn);
             Vector2d targetDisplacement = getTargetDisplacement();
             targetDisplacement = targetDisplacement != null ? targetDisplacement : new Vector2d(1,0); //Use of a unit vector in null state
             // double error = getTurretAbsoluteAngleRad()-targetDisplacement.angle();
@@ -576,8 +578,11 @@ public class Shooter implements Loop {
 
     public boolean nearTarget(boolean shooting){
         if (shooting){
-            return getSpeedError() < kRPMErrorShooting;
-            
+            if(targetRPM > 100){
+                return getSpeedError() < kRPMErrorShooting;
+            } else {
+                return false;
+            }
         } else {
             return getSpeedError() <kRPMErrorStopping;
         }
@@ -855,7 +860,7 @@ public class Shooter implements Loop {
 
     public void calibrate(){
         if(!turretCalibrated){
-            turretMotor.set(ControlMode.PercentOutput, -0.125); //Turn right
+            turretMotor.set(ControlMode.PercentOutput, -0.1825); //Turn right
             if(turretMagnetDetector.update(!magnetSensor.get())){
                 turretMotor.set(ControlMode.PercentOutput, 0.0);
                 turretMotor.setSelectedSensorPosition(turretDegreesToEncoderUnits(turretMagnetAngleDeg), Constants.kTalonPidIdx, Constants.kTalonTimeoutMs);

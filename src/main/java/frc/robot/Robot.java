@@ -200,8 +200,8 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
     //Calibrating shooter!
-    //drive.setOpenLoop(new DriveCommand(.5,.5));
-    //DriveLoop.getInstance().onLoop();
+    drive.setOpenLoop(new DriveCommand(.5,.5));
+    DriveLoop.getInstance().onLoop();
     Shooter.getInstance().calibrate();
     testLoopCheck = true;
   }

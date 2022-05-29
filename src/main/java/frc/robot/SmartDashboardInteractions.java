@@ -38,7 +38,7 @@ public class SmartDashboardInteractions
     {
     	driverControlsChooser = new SendableChooser<DriverControlsOption>();
     	driverControlsChooser.addOption(DriverControlsOption.XBOX_ARCADE.name,        DriverControlsOption.XBOX_ARCADE);
-        driverControlsChooser.setDefaultOption(DriverControlsOption.THRUSTMASTER_RIGHTHANDED.name,  DriverControlsOption.THRUSTMASTER_RIGHTHANDED);
+        // driverControlsChooser.setDefaultOption(DriverControlsOption.THRUSTMASTER_RIGHTHANDED.name,  DriverControlsOption.THRUSTMASTER_RIGHTHANDED);
         driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_RIGHTHANDED.name, DriverControlsOption.THRUSTMASTER_RIGHTHANDED);
         driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_REVERSIBLE.name, DriverControlsOption.THRUSTMASTER_REVERSIBLE);
     	// driverControlsChooser.addOption(DriverControlsOption.ARCADE.name,        DriverControlsOption.ARCADE);
@@ -50,7 +50,10 @@ public class SmartDashboardInteractions
         // driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_ARCADE.name,  DriverControlsOption.THRUSTMASTER_ARCADE);
         // driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_TANK.name,  DriverControlsOption.THRUSTMASTER_TANK);
         // driverControlsChooser.addOption(DriverControlsOption.THRUSTMASTER_2STICK.name,  DriverControlsOption.THRUSTMASTER_2STICK);
-    	SmartDashboard.putData("Driver Controls", driverControlsChooser);
+
+        driverControlsChooser.setDefaultOption(DriverControlsOption.XBOX_ARCADE.name,DriverControlsOption.XBOX_ARCADE);
+
+        SmartDashboard.putData("Driver Controls", driverControlsChooser);
 
 
 
